@@ -1,23 +1,23 @@
 @startuml
 
 entity Pills {
-  *Articul
+  *Articul(PK)
   --
   Name
   Stock
 }
 
 entity Order {
-  *id
+  *id(PK)
   --
-  *Articul
+  *Articul(FK)
   Number
 }
 
 entity Client {
-  *id
+  *id(PK)
   --
-  *order_id
+  *order_id(FK)
   Name
 }
 

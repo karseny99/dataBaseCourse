@@ -1,0 +1,20 @@
+@startuml
+
+entity Event {
+  *id
+  --
+  *member_id
+  *winner_id
+  Name
+}
+
+entity Member {
+  *id
+  --
+  *event_id
+  Name
+}
+
+Event }|..|{ Member
+
+@enduml

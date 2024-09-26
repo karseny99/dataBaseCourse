@@ -1,0 +1,28 @@
+@startuml
+
+entity Pills {
+  *Articul
+  --
+  Name
+  Stock
+}
+
+entity Order {
+  *id
+  --
+  *Articul
+  Number
+}
+
+entity Client {
+  *id
+  --
+  *order_id
+  Name
+}
+
+Order }|..|| Client
+Pills }|..|{ Order
+
+
+@enduml

@@ -1,24 +1,24 @@
 @startuml
 
 entity Pills {
-  *Articul(PK)
+  *Articul(PK) : int
   --
-  Name
-  Stock
+  Name : string
+  Stock : bool
 }
 
 entity Order {
-  *id(PK)
+  *id(PK) : int
   --
-  *Articul(FK)
-  Number
+  *Articul(FK) : int
+  Number : int
 }
 
 entity Client {
-  *id(PK)
+  *id(PK) : int
   --
-  *order_id(FK)
-  Name
+  *order_id(FK) : int
+  Name : string
 }
 
 Order }|..|| Client

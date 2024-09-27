@@ -3,16 +3,16 @@
 entity Event {
   *id(PK)
   --
-  *member_id(FK)
-  *winner_id(FK)
-  Name
+  *member_id(FK) : int
+  *winner_id(FK) : int
+  Name : string
 }
 
 entity Member {
-  *id(PK)
+  *id(PK) : int
   --
-  *event_id(FK)
-  Name
+  *event_id(FK) : int
+  Name : string
 }
 
 Event }|..|{ Member

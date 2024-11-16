@@ -116,7 +116,6 @@ COMMENT ON COLUMN downloads.book_id IS 'Уникальный идентифик�
 
 COMMENT ON COLUMN downloads.download_date IS 'Дата скачивания';
 
-
 -- Таблица для хранения информации об отзывах
 create table reviews (
     review_id serial primary key,

@@ -8,7 +8,7 @@ create table users (
     register_date timestamp
 );
 
-COMMENT ON TABLE users IS 'Информация о пользователях';
+COMMENT ON TABLE users IS 'Инaформация о пользователях';
 
 COMMENT ON COLUMN users.user_id IS 'Уникальный идентификатор пользователя';
 
@@ -122,26 +122,42 @@ COMMENT ON COLUMN downloads.book_id IS 'Уникальный идентифик�
 
 COMMENT ON COLUMN downloads.download_date IS 'Дата скачивания';
 
--- Таблица для хранения информации об отзывах
-create table reviews (
-    review_id serial primary key,
+create table ratings (
+    rating_id serial primary key,
     user_id serial references users(user_id) on delete cascade,
     book_id serial references books(book_id) on delete cascade,
-    rating int,
-    comment TEXT,
-    reviewed_at timestamp
+    rating int not null,
+    rated_at timestamp default current_timestamp
 );
 
-COMMENT ON TABLE reviews IS 'Информация об отзывах';
+COMMENT ON TABLE ratings IS 'Информация об оценках';
 
-COMMENT ON COLUMN reviews.review_id IS 'Уникальный идентификатор отзыва';
+COMMENT ON COLUMN ratings.rating_id IS 'Уникальный идентификатор оценки';
 
-COMMENT ON COLUMN reviews.user_id IS 'Уникальный идентификатор пользователя';
+COMMENT ON COLUMN ratings.user_id IS 'Уникальный идентификатор пользователя';
 
-COMMENT ON COLUMN reviews.book_id IS 'Уникальный идентификатор книги';
+COMMENT ON COLUMN ratings.book_id IS 'Уникальный идентификатор книги';
 
-COMMENT ON COLUMN reviews.rating IS 'Оценка книги (1 - 5)';
+COMMENT ON COLUMN ratings.rating IS 'Балл';
 
-COMMENT ON COLUMN reviews.comment IS 'Комментарий';
+COMMENT ON COLUMN ratings.rated_at IS 'Дата оценки';
 
-COMMENT ON COLUMN reviews.reviewed_at IS 'Дата отзыва';
+create table comments (
+    comment_id serial primary key,
+    user_id serial references users(user_id) on delete cascade,
+    book_id serial references books(book_id) on delete cascade,
+    comment TEXT not null,
+    commented_at timestamp default current_timestamp
+);
+
+COMMENT ON TABLE comments IS 'Информация о комментариях';
+
+COMMENT ON COLUMN comments.comment_id IS 'Уникальный идентификатор комментария';
+
+COMMENT ON COLUMN comments.user_id IS 'Уникальный идентификатор пользователя';
+
+COMMENT ON COLUMN comments.book_id IS 'Уникальный идентификатор книги';
+
+COMMENT ON COLUMN comments.comment IS 'Текст комментария';
+
+COMMENT ON COLUMN comments.commented_at IS 'Дата комментария';

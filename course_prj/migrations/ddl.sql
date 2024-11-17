@@ -1,8 +1,8 @@
 -- Таблица для хранения информации о пользователях
 create table users (
     user_id serial primary key,
-    username varchar(50),
-    email varchar(100),
+    username varchar(50) unique,
+    email varchar(100) unique,
     password_hash varchar(256),
     role varchar(10), -- admin or reader
     register_date timestamp
@@ -27,9 +27,11 @@ create table books (
     book_id serial primary key,
     title varchar(256),
     published_year int,
-    isbn varchar(256),
+    isbn varchar(256) unique,
     description TEXT,
-    added_at timestamp
+    added_at timestamp,
+    file_path VARCHAR(512),  
+    cover_image_path VARCHAR(512) 
 );
 
 COMMENT ON TABLE books IS 'Информация о книгах';
@@ -45,6 +47,10 @@ COMMENT ON COLUMN books.isbn IS 'ISBN';
 COMMENT ON COLUMN books.description IS 'Описание книги';
 
 COMMENT ON COLUMN books.added_at IS 'Дата добавления книги на сайт';
+
+COMMENT ON COLUMN books.file_path IS 'Путь к файлу кинги в хранилище';
+
+COMMENT ON COLUMN books.cover_image_path IS 'Путь к обложке книги в хранилище';
 
 -- Таблица для хранения информации об авторах
 create table authors (

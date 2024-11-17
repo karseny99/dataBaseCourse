@@ -6,6 +6,10 @@ import streamlit as st
 if 'logged_in' not in st.session_state:
     st.session_state.logged_in = False
 
+if 'search_request' not in st.session_state:
+    st.session_state.search_request = ""
+
+
 def main() -> None:
 
     if not(st.session_state.logged_in):
@@ -21,7 +25,33 @@ def main() -> None:
             st.switch_page("pages/login.py")
 
     else:
-        st.write("Go searching!!!")
+        st.title("Open Library")
+        search_request = st.text_input("Enter book's name").strip()
+        search_button = st.button("🔎")
+
+        search_by_title = st.checkbox("Search by title")
+        search_by_isbn = st.checkbox("Search by ISBN")
+        search_by_author = st.checkbox("Search by author")
+
+        if search_button:
+            if len(search_request):
+                search_columns = []
+                if search_by_title:
+                    search_columns.append("title")
+                if search_by_author:
+                    search_columns.append("author")
+                if search_by_isbn:
+                    search_columns.append("isbn")
+
+                if len(search_columns) == 0:
+                    st.error("At least one column must be selected")
+                else:
+                    st.session_state.search_request = [search_request, search_columns]
+                    st.switch_page("pages/search.py")
+                    st.write(f"Searching for {search_request}")
+            else:
+                st.error("Invalid book's name")
+
 
 
 if __name__ == "__main__":

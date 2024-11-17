@@ -6,6 +6,10 @@ def login_user() -> None:
         login page
     '''
 
+    back_button = st.button("Back")
+    if back_button:
+        st.switch_page("main.py")
+
     if not(st.session_state.logged_in):
         login = st.text_input("Enter a username or email").strip()
         password = st.text_input("Enter a password", type="password").strip()
@@ -24,7 +28,7 @@ def login_user() -> None:
         login_button = st.button("Log in")
         if login_button:
             try:
-                st.write(Authentication.login_user(login, password))
+                st.session_state.user_id = Authentication.login_user(login, password)
                 st.session_state.logged_in = True
                 st.empty()
                 st.success("Logged in successfully")

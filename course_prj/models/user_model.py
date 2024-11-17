@@ -9,8 +9,8 @@ class User(Base):
     __tablename__ = 'users'
 
     user_id = Column(Integer, primary_key=True, autoincrement=True)
-    username = Column(String(50), nullable=False)
-    email = Column(String(100), nullable=False)
+    username = Column(String(50), unique=True, nullable=False)
+    email = Column(String(100), unique=True, nullable=False)
     password_hash = Column(String(256), nullable=False)
     role = Column(String(10), default='reader', nullable=False)
     register_date = Column(DateTime, default=datetime.now)

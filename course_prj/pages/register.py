@@ -6,6 +6,10 @@ def regsiter_user() -> None:
         Registration page
     '''
 
+    back_button = st.button("Back")
+    if back_button:
+        st.switch_page("main.py")
+
     if not(st.session_state.logged_in):
 
         username = st.text_input("Enter a username").strip()
@@ -33,7 +37,7 @@ def regsiter_user() -> None:
                 st.write("Password must have at least one capital letter, at least one special symbol and its size has to be at least 8 symbols")
             else:
                 try:
-                    Registration.register_user(username, email, password)
+                    st.session_state.user_id = Registration.register_user(username, email, password)
                     st.session_state.logged_in = True
                     st.empty()
                     st.success("Registered successfully")

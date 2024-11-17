@@ -1,9 +1,7 @@
 
-import re
 import bcrypt
 
 from repositories.users_methods import *
-from models.user_model import User
 
 class LoginException(Exception):
     '''Base class for login exception'''

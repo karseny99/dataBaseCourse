@@ -3,8 +3,6 @@ import re
 import bcrypt
 
 from repositories.users_methods import *
-from repositories.users_methods import add_new_user
-
 
 class RegistrationException(Exception):
     '''Base class for registration exception'''

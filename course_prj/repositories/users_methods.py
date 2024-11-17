@@ -12,11 +12,11 @@ def add_new_user(username: str, email: str, password_hash: str, role = 'reader')
     '''
 
     new_user = User(
-                    username=username,
-                    email=email,
-                    password_hash=password_hash,
-                    role=role,
-                    register_date=datetime.now()
+        username=username,
+        email=email,
+        password_hash=password_hash,
+        role=role,
+        register_date=datetime.now()
     )
 
     with get_session() as session:
@@ -32,8 +32,8 @@ def get_all_usernames() -> list:
         Returns all registered usernames
     '''
     with get_session() as session:
-        usernames = [name[0] for name in session.query(User.username).all()]
-        return usernames
+        usernames = session.query(User.username).all()
+        return [name[0] for name in usernames]
 
 
 def get_all_emails() -> list:
@@ -41,8 +41,8 @@ def get_all_emails() -> list:
         Returns all registered emails
     '''
     with get_session() as session:
-        email = [email[0] for email in session.query(User.email).all()]
-        return email
+        emails = session.query(User.email).all()
+        return [email[0] for email in emails]
     
 def get_user_info(login: str) -> User:
     '''
@@ -64,3 +64,10 @@ def get_user_info(login: str) -> User:
             print(f"User with login {login} not found in database")
             return None
     
+def get_user_ids() -> list:
+    '''
+        Returns list of existed user_ids
+    '''
+    with get_session() as session:
+        user_ids = session.query(User.user_id).all()
+        return [user_id[0] for user_id in user_ids]

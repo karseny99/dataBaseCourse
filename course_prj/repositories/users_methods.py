@@ -64,6 +64,16 @@ def get_user_info(login: str) -> User:
             print(f"User with login {login} not found in database")
             return None
     
+def get_user_id_info(user_id: int) -> User:
+    '''
+        Returns info about user with given user_id 
+    '''
+
+    with get_session() as session:
+        return User.from_orm(session.query(User).filter(User.user_id==user_id).first())
+
+        
+
 def get_user_ids() -> list:
     '''
         Returns list of existed user_ids

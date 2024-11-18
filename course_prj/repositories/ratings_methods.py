@@ -1,4 +1,5 @@
 from models.rating_model import Rating
+from models.book_model import Book
 from repositories.connector import *
 
 from datetime import datetime
@@ -58,3 +59,20 @@ def get_book_score_from_user(book_id: int, user_id: int) -> Rating:
         
         print(f"Rating of {book_id} from user {user_id} was found")
         return Rating.from_orm(rating)
+    
+
+def get_book_rating_info(book_id: int) -> dict:
+    '''
+        Returns num of ratings and avg rating
+        None if not exists
+    '''
+
+    with get_session() as session:
+        rating = session.query(func.count(Rating.rating_id).label("ratings_count"), \
+            func.avg(Rating.rating).label("average_rating")) \
+                .filter(Rating.book_id == book_id).one_or_none()
+
+        return dict({"ratings_count": rating.ratings_count, \
+                      "average_rating": rating.average_rating})
+
+

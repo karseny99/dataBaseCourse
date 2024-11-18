@@ -1,17 +1,14 @@
 import streamlit as st
 from services.search import *
 
-
-
 def search_page() -> None:
     '''
         search page
     '''
-    back_button = st.button("Back")
-    if back_button:
-        st.switch_page("main.py")
 
-    if not(st.session_state.logged_in):
+    back_button = st.button("Back")
+
+    if not(st.session_state.logged_in) or back_button:
         st.switch_page("main.py")
     else:
         found_books_list = search(st.session_state.search_request)

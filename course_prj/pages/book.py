@@ -7,11 +7,47 @@ import time
 
 DelaySubmission = 5
 
-if 'last_submit_time' not in st.session_state:
-    st.session_state.last_submit_time = -10
+if 'last_rating_submit_time' not in st.session_state:
+    st.session_state.last_rating_submit_time = -10
+
+if 'last_comment_submit_time' not in st.session_state:
+    st.session_state.last_comment_submit_time = -10
+
+if 'unrated_book' not in st.session_state:
+    st.session_state.unrated_book = False
+
+def show_main_info(book: dict) -> None:
+    st.header(book['title'])
+
+    book_rating = get_book_rating_info(book['book_id'])
+    if book_rating['average_rating']:
+        st.write(f"{book_rating['average_rating']:.1f}/5 \
+                  based on {book_rating['ratings_count']} score(s)")
+    else:
+        st.session_state.unrated_book = True
+        st.warning("No one rated book, be the first!")
+
+    st.image(book['cover_image_path'])
+
+    st.write(f"ISBN {book['isbn']}")
+
+    st.write(f"Published in {book['published_year']}")
+
+    authors = "".join(f"{author}," for author in book['authors'])[:-1]
+
+    st.markdown(f"Author(s) - {authors}")
+
+    categories = "".join(f" {category}," for category in book['categories'])[:-1]
+
+    st.markdown(f"Categories - {categories}")
+
+    st.write(f"description - {book['description']}")
+
+    st.markdown("---")
 
 
-def download_interface(book: dict, book_id: int) -> None:
+
+def download_interface(book: dict) -> None:
     if book['file_path']:
         with open(book['file_path'], 'rb') as book_file:
             if st.download_button(
@@ -21,7 +57,7 @@ def download_interface(book: dict, book_id: int) -> None:
                 mime="application/x-fictionbook"
             ): 
                 st.success("Downloaded")
-                add_download(st.session_state.user_id, book_id)
+                add_download(st.session_state.user_id, book['book_id'])
     else:
         st.write("Book file ran away")
 
@@ -37,27 +73,52 @@ def rating_interface(book_id: int) -> None:
     rating = st.slider("Rate the book!", min_value=1, max_value=5, value=default_score)
 
     current_time = time.time()
-    if st.button("Submit rating") and (current_time - st.session_state.last_submit_time) > DelaySubmission:
+    if st.button("Submit rating") and (current_time - st.session_state.last_rating_submit_time) > DelaySubmission:
         add_rating(book_id, st.session_state.user_id, rating)
+        # After rating added need to update old cache
+        get_book_personal_rating.clear()
+
+        if st.session_state.unrated_book: get_book_rating_info.clear()
+
         st.success("Submited")
-        st.session_state.last_submit_time = time.time()
+        st.session_state.last_rating_submit_time = time.time()
     else:
-        if current_time - st.session_state.last_submit_time <= DelaySubmission:
+        if current_time - st.session_state.last_rating_submit_time <= DelaySubmission:
             st.error("Not so fast! Go cool yourself")
 
+def adding_comment_interface(book_id: int) -> None:
+    comment = st.text_input("Leave a comment")
 
-def last_comments(book_id: int):
+    current_time = time.time()
+
+    if st.button("Send a comment") and (current_time - st.session_state.last_comment_submit_time) > DelaySubmission: 
+        if len(comment) == 0:
+            st.error("Cannot send an empty comment")
+        else:
+            add_comment(book_id, st.session_state.user_id, comment)
+            # After adding a comm deleting old cache
+            get_last_comments.clear()
+            st.success("Comment sent")
+        st.session_state.last_comment_submit_time = time.time()
+    else:
+        if current_time - st.session_state.last_comment_submit_time <= DelaySubmission:
+            st.error("Not so fast! Go cool yourself")
+
+def last_comments(book_id: int) -> None:
     comments = get_last_comments(book_id)
 
     if not comments:
         st.write("No comments yet")
-    
+    else:
+        st.subheader("Comments")
     for comm in comments:
         if not comm: continue
 
         st.markdown("---")
         st.write(f"{comm['comment']}")
-
+        comment_date = comm['commented_at'].strftime('%d.%m.%Y') 
+        username = get_username_by_commentid(comm['user_id'])
+        st.markdown(f"<small>Commented by {username}  on {comment_date}</small>", unsafe_allow_html=True)
 
 
 def book_page() -> None:
@@ -80,47 +141,29 @@ def book_page() -> None:
             st.error("Book did not found")
         else:
 
-            '''
-                Main info about the book
-            '''
-            st.header(book['title'])
-            st.image(book['cover_image_path'])
-            st.write(f"ISBN {book['isbn']}")
-            st.write(f"Published in {book['published_year']}")
-            authors = "".join(f"{author}," for author in book['authors'])[:-1]
-            st.markdown(f"Author(s) - {authors}")
-            categories = "".join(f" {category}," for category in book['categories'])[:-1]
-            st.markdown(f"Categories - {categories}")
-            st.write(f"desc:")
-            st.write(f"{book['description']}")
-            st.markdown("---")
+            # '''
+            #     Main info about the book
+            # '''
+            show_main_info(book)
 
-            '''
-                Download interface
-            '''
-            download_interface(book, book_id)
+            # '''
+            #     Download interface
+            # '''
+            download_interface(book)
 
-            '''
-                Rating interface
-            '''
+            # '''
+            #     Rating interface
+            # '''
             rating_interface(book_id)
 
-            '''
-                Comment interface
-            '''
-            comment = st.text_input("Leave a comment")
-            
-            if st.button("Send a comment"):
+            # '''
+            #     Comment interface
+            # '''
+            adding_comment_interface(book_id)
 
-                if len(comment) == 0:
-                    st.error("Cannot send an empty comment")
-                else:
-                    add_comment(book_id, st.session_state.user_id, comment)
-                    st.success("Comment sent")
-
-            '''
-                Last comments
-            '''
+            # '''
+            #     Last comments
+            # '''
             last_comments(book_id)
 
 

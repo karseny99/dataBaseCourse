@@ -1,6 +1,17 @@
-from repositories.ratings_methods import *
+import repositories.ratings_methods 
+import repositories.books_methods
 import streamlit as st
 
+@st.cache_data
+def get_book_rating_info(book_id: int) -> dict:
+    '''
+        Dict fields are 'average_rating' and 'ratings_count'
+
+        Returns a dict with nums of scores and average rating of book_id
+        None if there is no ratings for book_id
+    '''
+    book_rating_info = repositories.ratings_methods.get_book_rating_info(book_id)
+    return book_rating_info
 
 def add_rating(book_id: int, user_id: int, rating: int) -> int:
     '''
@@ -8,7 +19,7 @@ def add_rating(book_id: int, user_id: int, rating: int) -> int:
         Returns rating_id if successfully added
     '''
 
-    return add_or_update_rating(book_id, user_id, rating)
+    return repositories.ratings_methods.add_or_update_rating(book_id, user_id, rating)
 
 
 @st.cache_data
@@ -18,7 +29,7 @@ def get_book_personal_rating(book_id: int, user_id: int) -> dict:
         Returns date and score as a dict
     '''
 
-    rating_info = get_book_score_from_user(book_id, user_id)
+    rating_info = repositories.ratings_methods.get_book_score_from_user(book_id, user_id)
 
     if not rating_info:
         return None

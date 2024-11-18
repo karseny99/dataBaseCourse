@@ -6,7 +6,7 @@ from models.book_model import Book
 from repositories.authors_methods import *
 from repositories.books_authors_methods import *
 import repositories.book_categories 
-
+import repositories.ratings_methods
 
 def search_in_column(search_value: str, column_name: str) -> list:
     '''
@@ -61,3 +61,4 @@ def get_book_ids() -> list:
     with get_session() as session:
         book_ids = session.query(Book.book_id).all()
         return [book_id[0] for book_id in book_ids]
+    

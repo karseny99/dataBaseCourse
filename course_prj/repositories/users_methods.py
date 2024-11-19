@@ -44,6 +44,7 @@ def get_all_emails() -> list:
         emails = session.query(User.email).all()
         return [email[0] for email in emails]
     
+
 def get_user_info(login: str) -> User:
     '''
         Returns info about user with given login 
@@ -64,16 +65,16 @@ def get_user_info(login: str) -> User:
             print(f"User with login {login} not found in database")
             return None
     
+
 def get_user_id_info(user_id: int) -> User:
     '''
         Returns info about user with given user_id 
     '''
 
     with get_session() as session:
-        return User.from_orm(session.query(User).filter(User.user_id==user_id).first())
+        return User.from_orm(session.query(User).filter(User.user_id==user_id).one_or_none())
 
         
-
 def get_user_ids() -> list:
     '''
         Returns list of existed user_ids

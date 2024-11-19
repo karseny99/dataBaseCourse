@@ -161,3 +161,16 @@ COMMENT ON COLUMN comments.book_id IS 'Уникальный идентифика
 COMMENT ON COLUMN comments.comment IS 'Текст комментария';
 
 COMMENT ON COLUMN comments.commented_at IS 'Дата комментария';
+
+
+create table admin_requests (
+    request_id serial primary key,
+    user_id serial references users(user_id) on delete cascade,
+    request_date timestamp default current_timestamp
+);
+
+COMMENT ON COLUMN admin_requests.request_id IS 'Уникальный идентификатор запроса';
+
+COMMENT ON COLUMN admin_requests.user_id IS 'Уникальный идентификатор пользователя';
+
+COMMENT ON COLUMN admin_requests.request_date IS 'Дата запроса';

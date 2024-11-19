@@ -1,7 +1,32 @@
 from models.comment_model import Comment
+from models.book_model import Book
+from models.user_model import User
+from models.rating_model import Rating
+from models.download_model import Download
 from repositories.connector import *
 
+from sqlalchemy import exists
+
 from datetime import datetime
+
+def delete_comment(comment_id: int) -> int:
+    '''
+        Removes comment from db by comment_id
+        Returns comment_id if successfully deleted
+        None otherwise
+    '''
+
+    with get_session() as session:
+        deletion_request = session.query(Comment).filter(Comment.comment_id == comment_id).one_or_none()
+        
+        if not deletion_request:
+            return None
+
+        session.delete(deletion_request)
+        session.commit()
+
+        return comment_id
+
 
 def add_comment(book_id: int, user_id: int, comment: str) -> int:
     '''
@@ -23,7 +48,7 @@ def add_comment(book_id: int, user_id: int, comment: str) -> int:
         return new_comment.comment_id
 
 
-def get_last_comments(book_id: int, comments_n: int = 10):
+def get_last_comments(book_id: int, comments_n: int = 10) -> list:
     '''
         Returns last 10 comments from book_id
     '''
@@ -38,17 +63,70 @@ def get_last_comments(book_id: int, comments_n: int = 10):
         comments = [Comment.from_orm(comm) for comm in comments]
         return comments
 
-# def get_book_score_from_user(book_id: int, user_id: int) -> Rating:
-#     '''
-#         Finds user's score for book_id if exists
-#         Return score and scored_at date
-#     '''
+# unnecessary
+def get_user_comments_info(user_id: int) -> list:
+    '''
+        Returns a list of comments sent by user_id
+        returns item is [comment_id, comment, commented_at, book_id, book's title]
+    '''
 
-#     with get_session() as session:
-#         rating = session.query(Rating).filter(Rating.book_id == book_id, Rating.user_id == user_id).first()
-        
-#         if not rating:
-#             return None
-        
-#         print(f"Rating of {book_id} from user {user_id} was found")
-#         return Rating.from_orm(rating)
+    with get_session() as session:
+        items = session.query(
+            Comment.comment_id, 
+            Comment.comment,
+            Comment.commented_at,
+            Book.book_id,
+            Book.title
+        ).join(Book, Book.book_id == Comment.book_id) \
+            .filter(Comment.user_id == user_id).all()
+    
+        items = [
+            {
+                "comment_id": comment_id,
+                "comment": comment,
+                "commented_at": commented_at,
+                "book_id": book_id,
+                "title": title
+            }
+            for comment_id, comment, commented_at, book_id, title in items
+        ]
+
+        return items
+    
+
+def get_user_actions(user_id: int) -> list:
+    '''
+        Returns a list of book's actions made by user_id
+        returns item is [book_id, title, rating, rated_at, comment_count, last_download_date]
+    '''
+
+    with get_session() as session:
+
+
+        items = session.query(
+            Book.book_id,
+            Book.title,
+            func.max(Rating.rating),
+            func.max(Rating.rated_at),
+            func.count(Comment.comment).label("comment_count"),
+            func.max(Download.download_date).label("last_download_date")
+        ) \
+            .outerjoin(Rating, (Rating.book_id == Book.book_id) & (Rating.user_id == user_id)) \
+            .outerjoin(Comment, (Comment.book_id == Book.book_id) & (Comment.user_id == user_id)) \
+            .outerjoin(Download, (Download.book_id == Book.book_id) & (Download.user_id == user_id)) \
+        .group_by(Book.book_id, Book.title).all()
+
+
+        items = [
+            {
+                "book_id": book_id,
+                "title": title,
+                "rating": rating,
+                "rated_at": rated_at,
+                "comment_count": comment_count,
+                "last_download_date": last_download_date,
+            }
+            for book_id, title, rating, rated_at, comment_count, last_download_date in items
+        ]
+
+        return items

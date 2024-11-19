@@ -13,7 +13,7 @@ class Download(Base):
     download_id = Column(Integer, primary_key=True, autoincrement=True)
     user_id = Column(Integer, ForeignKey(User.user_id), primary_key=True)
     book_id = Column(Integer, ForeignKey(Book.book_id), primary_key=True)
-    download_date = Column(DateTime, default=datetime.now)
+    download_date = Column(DateTime, default=datetime.now())
 
     @classmethod 
     def from_orm(cls, download_orm):

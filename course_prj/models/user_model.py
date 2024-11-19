@@ -13,7 +13,7 @@ class User(Base):
     email = Column(String(100), unique=True, nullable=False)
     password_hash = Column(String(256), nullable=False)
     role = Column(String(10), default='reader', nullable=False)
-    register_date = Column(DateTime, default=datetime.now)
+    register_date = Column(DateTime, default=datetime.now())
 
     @classmethod 
     def from_orm(cls, user_orm):

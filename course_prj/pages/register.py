@@ -1,6 +1,8 @@
 import streamlit as st
 from services.register import *
+from services.error_handler import error_handler
 
+@error_handler
 def regsiter_user() -> None:
     '''
         Registration page
@@ -10,7 +12,7 @@ def regsiter_user() -> None:
     if back_button:
         st.switch_page("main.py")
 
-    if not(st.session_state.logged_in):
+    if not(st.session_state.get("logged_in", None)):
 
         username = st.text_input("Enter a username").strip()
         email = st.text_input("Enter a email").strip()

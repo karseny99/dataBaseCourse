@@ -1,9 +1,13 @@
 import streamlit as st
+import time
+import os
+
 from services.book import *
 from services.downloads import *
 from services.ratings import *
 from services.comments import *
-import time
+from services.user import get_info_actions_user, is_admin
+from services.error_handler import error_handler
 
 DelaySubmission = 5
 
@@ -16,6 +20,7 @@ if 'last_comment_submit_time' not in st.session_state:
 if 'unrated_book' not in st.session_state:
     st.session_state.unrated_book = False
 
+
 def show_main_info(book: dict) -> None:
     st.header(book['title'])
 
@@ -27,7 +32,10 @@ def show_main_info(book: dict) -> None:
         st.session_state.unrated_book = True
         st.warning("No one rated book, be the first!")
 
-    st.image(book['cover_image_path'])
+    try:
+        st.image(book['cover_image_path'])
+    except:
+        pass
 
     st.write(f"ISBN {book['isbn']}")
 
@@ -46,18 +54,26 @@ def show_main_info(book: dict) -> None:
     st.markdown("---")
 
 
-
 def download_interface(book: dict) -> None:
     if book['file_path']:
-        with open(book['file_path'], 'rb') as book_file:
-            if st.download_button(
-                label="Download book (fb2)",
-                data=book_file,
-                file_name=f"{book['title']}.fb2",
-                mime="application/x-fictionbook"
-            ): 
-                st.success("Downloaded")
-                add_download(st.session_state.user_id, book['book_id'])
+        try:
+            with open(book['file_path'], 'rb') as book_file:
+                if st.download_button(
+                            label="Download book (fb2)",
+                            data=book_file,
+                            file_name=f"{book['title']}.fb2",
+                            mime="application/x-fictionbook"
+                        ) :
+                    st.success("Downloaded")
+                    try:
+                        user_id = st.session_state.user_id
+                    except:
+                        st.switch_page("main.py")
+                    add_download(user_id, book['book_id'])
+                    get_info_actions_user.clear()
+        except FileNotFoundError as e:
+            st.error(str(e))
+
     else:
         st.write("Book file ran away")
 
@@ -77,7 +93,7 @@ def rating_interface(book_id: int) -> None:
         add_rating(book_id, st.session_state.user_id, rating)
         # After rating added need to update old cache
         get_book_personal_rating.clear()
-
+        get_info_actions_user.clear()
         if st.session_state.unrated_book: get_book_rating_info.clear()
 
         st.success("Submited")
@@ -85,6 +101,7 @@ def rating_interface(book_id: int) -> None:
     else:
         if current_time - st.session_state.last_rating_submit_time <= DelaySubmission:
             st.error("Not so fast! Go cool yourself")
+
 
 def adding_comment_interface(book_id: int) -> None:
     comment = st.text_input("Leave a comment")
@@ -98,28 +115,41 @@ def adding_comment_interface(book_id: int) -> None:
             add_comment(book_id, st.session_state.user_id, comment)
             # After adding a comm deleting old cache
             get_last_comments.clear()
+            get_info_actions_user.clear()
             st.success("Comment sent")
         st.session_state.last_comment_submit_time = time.time()
     else:
         if current_time - st.session_state.last_comment_submit_time <= DelaySubmission:
             st.error("Not so fast! Go cool yourself")
 
+
 def last_comments(book_id: int) -> None:
     comments = get_last_comments(book_id)
 
     if not comments:
         st.write("No comments yet")
+        return
     else:
+        st.markdown("---")
         st.subheader("Comments")
+
+    isAdmin = is_admin()
+    
     for comm in comments:
         if not comm: continue
-
         st.markdown("---")
+
+        if isAdmin:
+            if st.button(f"🗑️", key=comm['comment_id']):
+                delete_comment(comm['comment_id'])
+                get_last_comments.clear()
         st.write(f"{comm['comment']}")
         comment_date = comm['commented_at'].strftime('%d.%m.%Y') 
         username = get_username_by_commentid(comm['user_id'])
-        st.markdown(f"<small>Commented by {username}  on {comment_date}</small>", unsafe_allow_html=True)
+        st.markdown(f"<small>Commented by {username} at {comment_date}</small>", unsafe_allow_html=True)
+   
 
+  
 
 def book_page() -> None:
     '''
@@ -127,7 +157,7 @@ def book_page() -> None:
     '''
     book_id = st.session_state.get("book_id", None)
 
-    if book_id is None or not(st.session_state.logged_in):
+    if not book_id or not(st.session_state.get("logged_in", None)):
         st.switch_page("main.py")
 
     else:

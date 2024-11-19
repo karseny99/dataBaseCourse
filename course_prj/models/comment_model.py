@@ -14,7 +14,7 @@ class Comment(Base):
     user_id = Column(Integer, ForeignKey(User.user_id), primary_key=True)
     book_id = Column(Integer, ForeignKey(Book.book_id), primary_key=True)
     comment = Column(Text, nullable=False)
-    commented_at = Column(DateTime, default=datetime.now)
+    commented_at = Column(DateTime, default=datetime.now())
 
     @classmethod 
     def from_orm(cls, comment_orm):

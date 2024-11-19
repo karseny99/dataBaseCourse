@@ -37,4 +37,29 @@ def get_authors_from_book(book_id: int) -> list:
         return authors
 
 
+def insert_authors_by_book(authors: list, book_id: int) -> None:
+    '''
+        Inserts a list of authors related to book_id
+    '''
+
+    with get_session() as session:
+
+        for author in authors:
+            author_obj = session.query(Author).filter(Author.name.ilike(author)).one_or_none()
+
+            if not author_obj:
+                author_obj = Author(
+                    name=author,
+                    bio=None
+                )
+                session.add(author_obj)
+                session.commit()
+            
+            new_book_author_relation = BookAuthor(
+                author_id=author_obj.author_id,
+                book_id=book_id
+            )
+            session.add(new_book_author_relation)
+        print(f"{authors} was inserted to book-author table")
+        session.commit()
     

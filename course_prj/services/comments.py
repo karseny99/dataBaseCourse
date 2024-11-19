@@ -5,6 +5,16 @@ import streamlit as st
 
 comments_n = 10
 
+def delete_comment(comment_id: int) -> int:
+    '''
+        Removes comment by comment_id 
+        Returns comment_id if successfully
+        None otherwise
+    '''
+
+    return repositories.comments_methods.delete_comment(comment_id)
+
+
 def add_comment(book_id: int, user_id: int, comment: str) -> int:
     '''
         Appends new comment of book_id from user_id to database

@@ -62,3 +62,25 @@ def get_book_ids() -> list:
         book_ids = session.query(Book.book_id).all()
         return [book_id[0] for book_id in book_ids]
     
+
+def add_book(book_item: dict) -> int:
+    '''
+        Inserts new book to database
+        Returns new book_id
+    '''
+
+    with get_session() as session:
+        new_book = Book(
+            title=book_item['title'],
+            published_year=book_item.get('published_year'),
+            isbn=book_item['isbn'],
+            description=book_item.get('description'),
+            added_at=datetime.now(),
+            file_path=book_item.get('file_path'),
+            cover_image_path=book_item.get('cover_image_path')
+        )
+
+        session.add(new_book)
+        session.commit()
+        print(f"Inserted new book_id={new_book.book_id} into a book-table")
+        return new_book.book_id

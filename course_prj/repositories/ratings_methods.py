@@ -75,4 +75,26 @@ def get_book_rating_info(book_id: int) -> dict:
         return dict({"ratings_count": rating.ratings_count, \
                       "average_rating": rating.average_rating})
 
+# unnecessary
+def get_scored_books_info(user_id: int) -> list:
+    '''
+        Returns list item of books rated by user_id
+        item = [book_id, book's title, rating, rated_at]
+    '''
 
+    with get_session() as session:
+        items = session.query(Rating.book_id, Book.title, Rating.rating, Rating.rated_at) \
+            .join(Book, Book.book_id == Rating.book_id) \
+                .filter(Rating.user_id == user_id).all()
+        
+        items = [
+            {
+                "book_id" : book_id,
+                "title": title,
+                "rating": rating,
+                "rated_at": rated_at
+            }
+            for book_id, title, rating, rated_at in items
+        ]
+
+        return items

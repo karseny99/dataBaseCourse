@@ -1,4 +1,3 @@
-import psycopg2
 from contextlib import contextmanager
 from settings import DB_CONFIG, POOL_SIZE, POOL_MAX_SIZE
 import atexit

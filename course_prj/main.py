@@ -3,13 +3,16 @@ import psycopg2
 import psycopg2.extras
 import streamlit as st
 
+from services.error_handler import error_handler
+from pages.sidebar import show_sidebar
+
 if 'logged_in' not in st.session_state:
     st.session_state.logged_in = False
 
 if 'search_request' not in st.session_state:
     st.session_state.search_request = ""
 
-
+@error_handler
 def main() -> None:
 
     if not(st.session_state.logged_in):
@@ -25,6 +28,8 @@ def main() -> None:
             st.switch_page("pages/login.py")
 
     else:
+        show_sidebar()
+        
         st.title("Open Library")
         search_request = st.text_input("Enter book's name").strip()
         search_button = st.button("🔎")
@@ -48,7 +53,6 @@ def main() -> None:
                 else:
                     st.session_state.search_request = [search_request, search_columns]
                     st.switch_page("pages/search.py")
-                    st.write(f"Searching for {search_request}")
             else:
                 st.error("Invalid book's name")
 

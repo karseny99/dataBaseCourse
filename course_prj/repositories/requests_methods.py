@@ -29,5 +29,32 @@ def add_request(user_id: int) -> int:
         return new_request.request_id
 
 
+def get_admin_requested_users() -> list:
+    '''
+        Returns list of user_ids who sent admin request
+    '''
 
+    with get_session() as session:
+        user_ids = session.query(Request.user_id).all()
+        return user_ids
     
+
+def remove_from_requests(user_id: int) -> int:
+    '''
+        Removes user_id from admin_requests
+        Returns request_id if user_id exists
+        None otherwise
+    '''
+
+    with get_session() as session:
+        request = session.query(Request).filter(Request.user_id == user_id).one_or_none()
+
+        if not request:
+            return None
+        
+        request_id = request.request_id
+
+        session.delete(request)
+        session.commit()
+
+        return request_id

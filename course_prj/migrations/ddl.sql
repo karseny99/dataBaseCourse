@@ -8,6 +8,10 @@ create table users (
     register_date timestamp
 );
 
+CREATE INDEX idx_users_username ON users(username);
+
+CREATE INDEX idx_users_email ON users(email);
+
 COMMENT ON TABLE users IS 'Инaформация о пользователях';
 
 COMMENT ON COLUMN users.user_id IS 'Уникальный идентификатор пользователя';
@@ -34,6 +38,13 @@ create table books (
     cover_image_path VARCHAR(512) 
 );
 
+CREATE INDEX idx_books_title ON books(title);
+
+CREATE INDEX idx_books_isbn ON books(isbn);
+
+CREATE INDEX idx_books_published_year ON books(published_year);
+
+
 COMMENT ON TABLE books IS 'Информация о книгах';
 
 COMMENT ON COLUMN books.book_id IS 'Уникальный идентификатор книги';
@@ -59,6 +70,9 @@ create table authors (
     bio TEXT
 );   
 
+CREATE INDEX idx_authors_name ON authors(name);
+
+
 COMMENT ON TABLE authors IS 'Информация об авторах';
 
 COMMENT ON COLUMN authors.author_id IS 'Уникальный идентификатор автора';
@@ -72,6 +86,9 @@ create table book_authors (
     author_id serial references authors(author_id) on delete cascade,
     book_id  serial references books(book_id) on delete cascade
 );   
+
+CREATE INDEX idx_book_authors_author_book ON book_authors(author_id, book_id);
+
 
 COMMENT ON TABLE book_authors IS 'Информация о связи книг и авторов';
 
@@ -98,6 +115,9 @@ create table book_categories (
     category_id serial references categories(category_id) on delete cascade
 );
 
+CREATE INDEX idx_book_categories_book_category ON book_categories(book_id, category_id);
+
+
 COMMENT ON TABLE book_categories IS 'Жанры конкретных книг';
 
 COMMENT ON COLUMN book_categories.book_id IS 'Уникальный идентификатор книги';
@@ -111,6 +131,11 @@ create table downloads (
     book_id serial references books(book_id) on delete cascade,
     download_date timestamp
 );
+
+CREATE INDEX idx_downloads_user_id ON downloads(user_id);
+
+CREATE INDEX idx_downloads_book_id ON downloads(book_id);
+
 
 COMMENT ON TABLE downloads IS 'Информация о загрузках';
 
@@ -129,6 +154,11 @@ create table ratings (
     rating int not null,
     rated_at timestamp default current_timestamp
 );
+
+CREATE INDEX idx_ratings_user_id ON ratings(user_id);
+
+CREATE INDEX idx_ratings_book_id ON ratings(book_id);
+
 
 COMMENT ON TABLE ratings IS 'Информация об оценках';
 
@@ -150,6 +180,11 @@ create table comments (
     commented_at timestamp default current_timestamp
 );
 
+CREATE INDEX idx_comments_user_id ON comments(user_id);
+
+CREATE INDEX idx_comments_book_id ON comments(book_id);
+
+
 COMMENT ON TABLE comments IS 'Информация о комментариях';
 
 COMMENT ON COLUMN comments.comment_id IS 'Уникальный идентификатор комментария';
@@ -168,6 +203,8 @@ create table admin_requests (
     user_id serial references users(user_id) on delete cascade,
     request_date timestamp default current_timestamp
 );
+
+CREATE INDEX idx_admin_requests_user_id ON admin_requests(user_id);
 
 COMMENT ON COLUMN admin_requests.request_id IS 'Уникальный идентификатор запроса';
 

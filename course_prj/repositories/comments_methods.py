@@ -102,7 +102,6 @@ def get_user_actions(user_id: int) -> list:
 
     with get_session() as session:
 
-
         items = session.query(
             Book.book_id,
             Book.title,
@@ -114,7 +113,13 @@ def get_user_actions(user_id: int) -> list:
             .outerjoin(Rating, (Rating.book_id == Book.book_id) & (Rating.user_id == user_id)) \
             .outerjoin(Comment, (Comment.book_id == Book.book_id) & (Comment.user_id == user_id)) \
             .outerjoin(Download, (Download.book_id == Book.book_id) & (Download.user_id == user_id)) \
-        .group_by(Book.book_id, Book.title).all()
+        .group_by(Book.book_id, Book.title) \
+        .having(
+            func.max(Rating.rating).isnot(None) |
+            (func.count(Comment.comment) > 0) |
+            func.max(Download.download_date).isnot(None)
+        ) \
+        .all()
 
 
         items = [

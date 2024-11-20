@@ -82,3 +82,22 @@ def get_user_ids() -> list:
     with get_session() as session:
         user_ids = session.query(User.user_id).all()
         return [user_id[0] for user_id in user_ids]
+    
+
+def set_user_admin(user_id: int) -> int:
+    '''
+        Returns for new admin user_id if successfully changed
+        None otherwise
+    '''
+
+    with get_session() as session:
+        user = session.query(User).filter(User.user_id == user_id).one_or_none()
+
+        if not user:
+            return None
+        
+        user.role = 'admin'
+        session.add(user)
+        session.commit()
+
+        return user.user_id

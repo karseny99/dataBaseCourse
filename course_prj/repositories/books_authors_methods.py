@@ -32,7 +32,9 @@ def get_authors_from_book(book_id: int) -> list:
     '''
 
     with get_session() as session:
-        authors = session.query(Author).join(BookAuthor, Author.author_id == BookAuthor.author_id).filter(BookAuthor.book_id == book_id).all()
+        authors = session.query(Author) \
+            .join(BookAuthor, Author.author_id == BookAuthor.author_id) \
+                .filter(BookAuthor.book_id == book_id).all()
         authors = [Author.from_orm(author) for author in authors]
         return authors
 

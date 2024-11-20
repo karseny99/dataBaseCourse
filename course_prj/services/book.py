@@ -51,6 +51,37 @@ def add_book(book_item: dict) -> int:
     return book_id
 
 
+def load_to_storage(upload_book, upload_cover) -> list:
+    '''
+        Loads .fb2 and .jpg to database, or only .fb2 if .jpg wasn't given
+        Returns path list
+    '''
+
+    uploaded_pair = []
+
+    unique_book_file_name = generate_unique_filename(upload_book.name)
+
+    save_path = os.path.join("storage", "books", unique_book_file_name)
+    os.makedirs(os.path.dirname(save_path), exist_ok=True)
+    with open(save_path, "wb") as book_file:
+        book_file.write(upload_book.getbuffer())
+
+    uploaded_pair.append(save_path)
+
+    if upload_cover is not None:
+        unique_cover_file_name = f"{os.path.splitext(unique_book_file_name)[0]}.jpg"
+        cover_save_path = os.path.join("storage", "covers", unique_cover_file_name)
+
+        os.makedirs(os.path.dirname(cover_save_path), exist_ok=True)
+
+        with open(cover_save_path, "wb") as cover_file:
+            cover_file.write(upload_cover.getbuffer())
+
+        uploaded_pair.append(cover_save_path)
+
+    return uploaded_pair
+  
+
 
 def generate_unique_filename(filename: str) -> str:
     '''

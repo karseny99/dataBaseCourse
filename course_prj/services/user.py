@@ -1,8 +1,13 @@
 
-from repositories.users_methods import get_user_id_info
+from repositories.users_methods import get_user_id_info, set_user_admin
 from repositories.comments_methods import get_user_actions
+from repositories.requests_methods import get_admin_requested_users, remove_from_requests
+from sqlalchemy.exc import OperationalError
 
 import streamlit as st
+import os
+import json
+from datetime import datetime
 
 def is_admin() -> bool:
     user_id = st.session_state.user_id
@@ -12,6 +17,7 @@ def is_admin() -> bool:
         return False
     
     return True
+
 
 def get_user_info(user_id: int) -> dict:
     '''
@@ -35,7 +41,6 @@ def get_info_actions_user(user_id: int) -> dict:
         Requests function to get user's info if exists
         Contains basics from users table and additional info such as
         all sent comments_info, ratings_info, downloads_info 
-        None otherwise
     '''
 
     user_info = get_user_info(user_id)
@@ -47,3 +52,119 @@ def get_info_actions_user(user_id: int) -> dict:
     return user_info
 
 
+def get_info_data_file() -> str:
+    '''
+        Creates a txt file with data & actions for each user who sent admin-requst
+    '''
+    users_requested = get_admin_requested_users()
+
+    filename = "data.txt"
+    save_path = os.path.join("storage", filename)
+
+    try:
+        remove_file(filename)
+    except:
+        pass
+
+    os.makedirs(os.path.dirname(save_path), exist_ok=True)
+    with open(save_path, "a") as data_file:
+
+        for user_id in users_requested:
+            info_data = get_info_actions_user(user_id[0])
+
+            # Cleaning given dict for json dump
+            info_data.pop('_sa_instance_state', None)
+            info_data['register_date'] = info_data['register_date'].isoformat()
+                        
+            for action in info_data.get('actions', []):
+                if action['rated_at'] is not None:
+                    action['rated_at'] = action['rated_at'].isoformat()
+                if action['last_download_date'] is not None:
+                    action['last_download_date'] = action['last_download_date'].isoformat()
+
+            if 'actions' not in info_data:
+                info_data['actions'] = 'No actions'
+
+            json_data = json.dumps(info_data, ensure_ascii=False, indent=4)
+            data_file.write(json_data + "\n\n")
+
+    return save_path
+
+
+def remove_file(filename: str) -> None:
+    os.remove(filename)
+
+
+def set_admin_role(user_id: int) -> int:
+    '''
+        Removes from request list
+        Calls for changing user's role by user_id
+        Returns user_id if successfully
+        None otherwise
+    '''
+
+    if not remove_from_requests(user_id):
+        return None
+
+    return set_user_admin(user_id)
+
+
+import subprocess
+
+def create_database_dump(db_name, user, password):
+    '''
+        Creates dump of database,
+        Returns created dump file
+        None if auth data is wrong
+    '''
+
+    filename = 'storage/db.dump'
+
+    try:
+        os.environ['PGPASSWORD'] = password
+
+        command = [
+            'pg_dump',
+            '-d', db_name,
+            '-U', user,
+            '-h', 'localhost',
+            '-p', '5432',
+            '-F', 'c', 
+            '-f', filename
+        ]
+
+        subprocess.run(command, capture_output=True, check=True, text=True)
+    except subprocess.CalledProcessError as e:
+        # print(f"Cannot create dump of database, because of {e}")
+
+        if "authentication failed" in e.stderr.lower():
+            return None
+        elif "connection" in e.stderr.lower():
+            print(f"Cannot create dump of database, because of {e}")
+            raise OperationalError
+    finally:
+        del os.environ['PGPASSWORD']
+
+    return filename
+# create_database_dump('postgres', 'postgres', 'localhost', '5432', 'file', '1')
+        
+def restore_database_dump(db_name, user, password):
+    try:
+        os.environ['PGPASSWORD'] = password
+        
+        command = [
+            'pg_restore',
+            '-d', db_name,
+            '-U', user,
+            '-h', host,
+            '-p', port,
+            input_file
+        ]
+        
+        subprocess.run(command, capture_output=True, check=True)
+    except Exception as e:
+        print(f"Cannot load from dump, because of {e}")
+    finally:
+        del os.environ['PGPASSWORD']
+
+# restore_database_dump('postgres', 'postgres', 'localhost', 5432, 'file', '1')

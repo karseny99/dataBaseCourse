@@ -54,7 +54,7 @@ def book_uploading() -> None:
 
         if submit_button \
             and len(book_item['title']) \
-            and len(book_item['published_year']) \
+            and book_item['published_year'] is not None \
             and len(book_item['isbn']) \
             and len(book_item['authors']) \
             :
@@ -68,7 +68,7 @@ def book_uploading() -> None:
                 st.rerun() 
         else:
             if submit_button:
-                st.error("You didn't fill important fiels")
+                st.error("You didn't fill important fields")
 
 
 def admin_requests() -> None:
@@ -85,7 +85,7 @@ def admin_requests() -> None:
             ) :
             st.success("Downloaded")
 
-
+@error_handler
 def show_dump_save() -> None:
     with st.sidebar:
         st.header("database dump")
@@ -94,19 +94,27 @@ def show_dump_save() -> None:
         password = st.text_input("Enter password", type="password").strip()
 
         auth_submit = st.button("Submit entered data")
-        if auth_submit and len(db_name) and len(user) and len(password):
-            filename = create_database_dump(db_name, user, password)
-            if not filename:
-                st.error("Wrong entered data")
-            else:
-                with open(filename, 'rb') as db_dump:
-                    if st.download_button(
-                            label="Download db_dump",
-                            data=db_dump,
-                            file_name=f"{os.path.basename(filename)}",
-                            mime="application/octet-stream"
-                        ) :
-                        st.success("Downloaded")
+        if auth_submit and len(db_name) and len(user) and len(password) and check_database_connection(db_name, user, password):
+            if 'db_name' not in st.session_state:
+                st.session_state.db_name = db_name
+                
+            if 'user_db' not in st.session_state:
+                st.session_state.user_db = user
+
+            if 'password_db' not in st.session_state:
+                st.session_state.password_db = password
+
+            st.switch_page("pages/admin_panel.py")  
+
+        else:
+            if auth_submit and not check_database_connection(db_name, user, password):
+                st.error("Invalid auth to database")
+
+
+
+
+
+
 
 
 def display_admin_page(user_info: dict) -> None:

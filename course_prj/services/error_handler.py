@@ -1,7 +1,7 @@
 import logging
 from sqlalchemy.exc import OperationalError
-
-from pages.error import display_error_page
+import psycopg2
+from pages.error import call_display_page
 
 logging.basicConfig(
     filename='app.log',
@@ -19,8 +19,10 @@ logging.getLogger().addHandler(console_handler)
 
 def handle_error(e):
     logging.error(e)
-    if isinstance(e, OperationalError):
-        display_error_page("Cannot load from database ...")
+    # print(f"\n\n {e} \n\n{type(e)} \n\n")
+    if isinstance(e, OperationalError) or isinstance(e, psycopg2.OperationalError):
+        # print("HERE")
+        call_display_page("Cannot load from database ...")
     else:
         print("else")
 

@@ -2,7 +2,7 @@
 from repositories.users_methods import get_user_id_info, set_user_admin
 from repositories.comments_methods import get_user_actions
 from repositories.requests_methods import get_admin_requested_users, remove_from_requests
-from sqlalchemy.exc import OperationalError
+from psycopg2 import OperationalError, connect
 
 import streamlit as st
 import os
@@ -10,6 +10,9 @@ import json
 from datetime import datetime
 
 def is_admin() -> bool:
+    if 'user_id' not in st.session_state:
+        return False
+
     user_id = st.session_state.user_id
     user = get_user_info(user_id)
 
@@ -141,30 +144,66 @@ def create_database_dump(db_name, user, password):
             return None
         elif "connection" in e.stderr.lower():
             print(f"Cannot create dump of database, because of {e}")
-            raise OperationalError
+            raise OperationalError("Database connection error")
     finally:
         del os.environ['PGPASSWORD']
 
     return filename
 # create_database_dump('postgres', 'postgres', 'localhost', '5432', 'file', '1')
         
-def restore_database_dump(db_name, user, password):
+def restore_database_dump(db_name, user, password, input_file) -> int:
+    '''
+        Restore of database by given dump file
+        Returns number if successfully dumped
+        None otherwise
+    '''
     try:
+
+        save_path = os.path.join("storage", "books", input_file)
+        os.makedirs(os.path.dirname(save_path), exist_ok=True)
+        with open(save_path, "wb") as dump_file:
+            dump_file.write(input_file.getbuffer())
+
         os.environ['PGPASSWORD'] = password
         
         command = [
             'pg_restore',
             '-d', db_name,
             '-U', user,
-            '-h', host,
-            '-p', port,
-            input_file
+            '-h', 'localhost',
+            '-p', '5432',
+            dump_file
         ]
         
-        subprocess.run(command, capture_output=True, check=True)
+        subprocess.run(command, capture_output=True, check=True, text=True)
     except Exception as e:
-        print(f"Cannot load from dump, because of {e}")
+        if "connection" in e.stderr.lower():
+            print(f"Cannot create dump of database, because of {e}")
+            raise OperationalError("Database connection error")
+        else:
+            return None
+
     finally:
         del os.environ['PGPASSWORD']
+    
+    return 2**4
 
 # restore_database_dump('postgres', 'postgres', 'localhost', 5432, 'file', '1')
+
+def check_database_connection(db_name, user, password) -> bool:
+    '''
+        Check if given data is valid
+        Returns true or false
+    '''
+    try:
+        connection = connect(
+            dbname=db_name,
+            user=user,
+            password=password,
+            host='localhost', 
+            port='5432'       
+        )
+        connection.close()
+        return True
+    except OperationalError as e:
+        return False

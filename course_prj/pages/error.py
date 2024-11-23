@@ -10,7 +10,7 @@ def call_display_page(message: str) -> None:
 def display_error_page() -> None:
     st.empty()
     if st.button("Back"):
-        st.switch_page("pages/main.py")
+        st.switch_page("main.py")
     st.title("Something went wrong")
     message = 'Dunno what'
     if 'error_message' in st.session_state:

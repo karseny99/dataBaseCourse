@@ -3,7 +3,7 @@ from repositories.connector import *
 from models.book_model import Book
 from models.category_model import Category
 from models.book_categories_model import BookCategories
-
+from services.logger import *
 
 def get_book_categories(book_id: str) -> list:
     '''
@@ -41,6 +41,6 @@ def insert_categories_by_book(categories: list, book_id: int) -> None:
                 book_id=book_id
             )
             session.add(new_book_category_relation)
-        print(f"{categories} was inserted to book-category table")
+        logging.info(f"{categories} was inserted to book-category table")
         session.commit()
     

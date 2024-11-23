@@ -2,6 +2,7 @@
 import bcrypt
 
 from repositories.users_methods import *
+from services.logger import *
 
 class LoginException(Exception):
     '''Base class for login exception'''
@@ -26,11 +27,10 @@ class Authentication:
         user_info = get_user_info(login.strip().lower())
 
         if user_info is None:
-            print(f"There is no such user in database")
             raise WrongEnterException
 
         if bcrypt.checkpw(password.encode('utf-8'), user_info.password_hash.encode('utf-8')):
             return user_info.user_id
         else:
-            print(f"User {login} was found in database but password is wrong!")
+            logging.info(f"User {login} was found in database but password is wrong!")
             raise WrongEnterException

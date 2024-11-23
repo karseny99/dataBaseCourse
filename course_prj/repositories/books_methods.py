@@ -7,6 +7,7 @@ from repositories.authors_methods import *
 from repositories.books_authors_methods import *
 import repositories.book_categories 
 import repositories.ratings_methods
+from services.logger import logging
 
 def search_in_column(search_value: str, column_name: str) -> list:
     '''
@@ -82,5 +83,5 @@ def add_book(book_item: dict) -> int:
 
         session.add(new_book)
         session.commit()
-        print(f"Inserted new book_id={new_book.book_id} into a book-table")
+        logging.info(f"Inserted new book_id={new_book.book_id} into a book-table")
         return new_book.book_id

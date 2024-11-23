@@ -3,6 +3,7 @@ from repositories.connector import *
 from models.book_model import Book
 from repositories.authors_methods import *
 from models.book_authors_model import BookAuthor
+from services.logger import logging
 
 def get_books_from_author(author_name: str) -> list:
     '''
@@ -62,6 +63,6 @@ def insert_authors_by_book(authors: list, book_id: int) -> None:
                 book_id=book_id
             )
             session.add(new_book_author_relation)
-        print(f"{authors} was inserted to book-author table")
+        logging.info(f"{authors} was inserted to book-author table")
         session.commit()
     

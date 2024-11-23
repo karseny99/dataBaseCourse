@@ -85,35 +85,32 @@ def admin_requests() -> None:
             ) :
             st.success("Downloaded")
 
+
+
 @error_handler
-def show_dump_save() -> None:
+def show_dump_recovery() -> None:
     with st.sidebar:
-        st.header("database dump")
-        db_name = st.text_input("Enter database's name").strip()
-        user = st.text_input("Enter database user's name").strip()
-        password = st.text_input("Enter password", type="password").strip()
+        st.header("database recovery")
+        # db_name = st.text_input("Enter database's name").strip()
+        # user = st.text_input("Enter database user's name").strip()
+        # password = st.text_input("Enter password", type="password").strip()
 
-        auth_submit = st.button("Submit entered data")
-        if auth_submit and len(db_name) and len(user) and len(password) and check_database_connection(db_name, user, password):
-            if 'db_name' not in st.session_state:
-                st.session_state.db_name = db_name
+        recover_submit = st.button("Recover database")
+        if recover_submit:
+            # if 'db_name' not in st.session_state:
+            #     st.session_state.db_name = db_name
                 
-            if 'user_db' not in st.session_state:
-                st.session_state.user_db = user
+            # if 'user_db' not in st.session_state:
+            #     st.session_state.user_db = user
 
-            if 'password_db' not in st.session_state:
-                st.session_state.password_db = password
+            # if 'password_db' not in st.session_state:
+            #     st.session_state.password_db = password
 
             st.switch_page("pages/admin_panel.py")  
 
-        else:
-            if auth_submit and not check_database_connection(db_name, user, password):
-                st.error("Invalid auth to database")
-
-
-
-
-
+        # else:
+        #     if auth_submit and not check_database_connection(db_name, user, password):
+        #         st.error("Invalid auth to database")
 
 
 
@@ -147,9 +144,9 @@ def display_admin_page(user_info: dict) -> None:
             st.success(f"New admin-{user_id} added")
 
     # '''
-    #     Database dump
+    #     Database recover
     # '''
-    show_dump_save()
+    show_dump_recovery()
 
 
 

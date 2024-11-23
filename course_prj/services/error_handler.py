@@ -1,21 +1,8 @@
-import logging
+
 from sqlalchemy.exc import OperationalError
 import psycopg2
 from pages.error import call_display_page
-
-logging.basicConfig(
-    filename='app.log',
-    filemode='a',
-    format='%(asctime)s - %(levelname)s - %(message)s',
-    level=logging.ERROR
-)
-
-console_handler = logging.StreamHandler()
-console_handler.setLevel(logging.ERROR)
-formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
-console_handler.setFormatter(formatter)
-
-logging.getLogger().addHandler(console_handler)
+from services.logger import *
 
 def handle_error(e):
     logging.error(e)
@@ -24,7 +11,7 @@ def handle_error(e):
         # print("HERE")
         call_display_page("Cannot load from database ...")
     else:
-        print("else")
+        print(f"else: {e}")
 
 def error_handler(func):
     def wrapper(*args, **kwargs):

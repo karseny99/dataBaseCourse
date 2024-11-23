@@ -1,7 +1,9 @@
 import os
-from dotenv import load_dotenv
 
-load_dotenv("env.env")
+# Without docker
+# from dotenv import load_dotenv
+
+# load_dotenv("env.env")
 
 DB_CONFIG = {
     "dbname": os.getenv("DB_NAME"),

@@ -4,10 +4,15 @@ from repositories.comments_methods import get_user_actions
 from repositories.requests_methods import get_admin_requested_users, remove_from_requests
 from psycopg2 import OperationalError, connect
 
+from repositories.database import restore_database_from_file
+from db_backup import dump_db
+
 import streamlit as st
 import os
 import json
 from datetime import datetime
+
+from settings import DB_CONFIG
 
 def is_admin() -> bool:
     if 'user_id' not in st.session_state:
@@ -114,83 +119,68 @@ def set_admin_role(user_id: int) -> int:
 
 import subprocess
 
-def create_database_dump(db_name, user, password):
-    '''
-        Creates dump of database,
-        Returns created dump file
-        None if auth data is wrong
-    '''
+# def create_database_dump(db_name, user, password):
+#     '''
+#         Creates dump of database,
+#         Returns created dump file
+#         None if auth data is wrong
+#     '''
 
-    filename = 'storage/db.dump'
+#     filename = 'storage/db.dump'
 
-    try:
-        os.environ['PGPASSWORD'] = password
+#     try:
+#         os.environ['PGPASSWORD'] = password
 
-        command = [
-            'pg_dump',
-            '-d', db_name,
-            '-U', user,
-            '-h', 'localhost',
-            '-p', '5432',
-            '-F', 'c', 
-            '-f', filename
-        ]
+#         command = [
+#             'pg_dump',
+#             '-d', db_name,
+#             '-U', user,
+#             '-h', 'localhost',
+#             '-p', '5432',
+#             '-F', 'c', 
+#             '-f', filename
+#         ]
 
-        subprocess.run(command, capture_output=True, check=True, text=True)
-    except subprocess.CalledProcessError as e:
-        # print(f"Cannot create dump of database, because of {e}")
+#         subprocess.run(command, capture_output=True, check=True, text=True)
+#     except subprocess.CalledProcessError as e:
+#         # print(f"Cannot create dump of database, because of {e}")
 
-        if "authentication failed" in e.stderr.lower():
-            return None
-        elif "connection" in e.stderr.lower():
-            print(f"Cannot create dump of database, because of {e}")
-            raise OperationalError("Database connection error")
-    finally:
-        del os.environ['PGPASSWORD']
+#         if "authentication failed" in e.stderr.lower():
+#             return None
+#         elif "connection" in e.stderr.lower():
+#             print(f"Cannot create dump of database, because of {e}")
+#             raise OperationalError("Database connection error")
+#     finally:
+#         del os.environ['PGPASSWORD']
 
-    return filename
+#     return filename
 # create_database_dump('postgres', 'postgres', 'localhost', '5432', 'file', '1')
         
-def restore_database_dump(db_name, user, password, input_file) -> int:
+def restore_database_dump(input_file) -> None:
     '''
         Restore of database by given dump file
-        Returns number if successfully dumped
-        None otherwise
     '''
-    try:
 
-        save_path = os.path.join("storage", "books", input_file)
-        os.makedirs(os.path.dirname(save_path), exist_ok=True)
-        with open(save_path, "wb") as dump_file:
-            dump_file.write(input_file.getbuffer())
+    save_path = "dumps/"
+    db_name = DB_CONFIG['dbname']
+    db_user = DB_CONFIG['user']
+    db_password = DB_CONFIG['password']
+    db_host = DB_CONFIG['host']
+    db_port = DB_CONFIG['port']
 
-        os.environ['PGPASSWORD'] = password
-        
-        command = [
-            'pg_restore',
-            '-d', db_name,
-            '-U', user,
-            '-h', 'localhost',
-            '-p', '5432',
-            dump_file
-        ]
-        
-        subprocess.run(command, capture_output=True, check=True, text=True)
-    except Exception as e:
-        if "connection" in e.stderr.lower():
-            print(f"Cannot create dump of database, because of {e}")
-            raise OperationalError("Database connection error")
-        else:
-            return None
+    dump_file_name = save_path + f"before_recover_backup_{db_name}_{datetime.now().strftime('%d.%m.%Y_%H.%M.%S')}.dump"
+    dump_db(dump_file_name, db_name, db_user, db_password, db_host, db_port)
 
-    finally:
-        del os.environ['PGPASSWORD']
-    
-    return 2**4
+    input_file_save_path = os.path.join(save_path, input_file.name)
+
+    with open(input_file_save_path, "wb") as uploaded_dump_file:
+        uploaded_dump_file.write(input_file.getbuffer())
+
+    restore_database_from_file(input_file_save_path)
 
 # restore_database_dump('postgres', 'postgres', 'localhost', 5432, 'file', '1')
 
-def check_database_connection(db_name, user, password) -> bool:
+def check_database_connection(db_name: str, user: str, password: str) -> bool:
     '''
         Check if given data is valid
         Returns true or false

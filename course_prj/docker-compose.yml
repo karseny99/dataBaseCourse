@@ -1,0 +1,47 @@
+services:
+  web:
+    build: .
+    ports:
+      - "8501:8501"
+    depends_on:
+      - db
+    environment:
+      DB_NAME: book_data_base
+      DB_USER: karseny
+      DB_PASSWORD: 1
+      DB_HOST: db
+      DB_PORT: 5432
+      POOL_SIZE: 10
+      POOL_MAX_SIZE: 20
+
+  db:
+    image: postgres:13
+    restart: always
+    environment:
+      POSTGRES_USER: karseny
+      POSTGRES_PASSWORD: 1
+      POSTGRES_DB: book_data_base
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./initdb:/docker-entrypoint-initdb.d 
+
+  db_backup:
+    build: .
+    depends_on:
+      - db
+    environment:
+      SAVE_PATH: ./dumps/
+      DB_NAME: book_data_base
+      DB_USER: karseny
+      DB_PASSWORD: 1
+      DB_HOST: db
+      DB_PORT: 5432
+    volumes:
+      - ./dumps:/app/dumps 
+    command: ["python", "db_backup.py"]
+
+volumes:
+  postgres_data:
+  dumps_data:

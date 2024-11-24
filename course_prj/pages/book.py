@@ -72,10 +72,9 @@ def download_interface(book: dict) -> None:
                     add_download(user_id, book['book_id'])
                     get_info_actions_user.clear()
         except FileNotFoundError as e:
-            st.error(str(e))
-
+            st.error("Book file was lost")
     else:
-        st.write("Book file ran away")
+        st.error("Book file was lost")
 
 
 def rating_interface(book_id: int) -> None:

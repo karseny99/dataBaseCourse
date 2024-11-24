@@ -1,0 +1,6 @@
+pandas==2.2.2
+psycopg2_binary==2.9.10
+bcrypt==4.2.0
+SQLAlchemy==2.0.36
+streamlit==1.40.1
+schedule==1.2.2

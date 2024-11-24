@@ -3,7 +3,7 @@ from services.search import *
 
 from services.error_handler import error_handler
 
-@error_handler
+# @error_handler
 def search_page() -> None:
     '''
         search page
@@ -25,6 +25,7 @@ def search_page() -> None:
                 if st.button(book['title'], key=book['book_id']):
                     st.session_state.book_id = book['book_id']
                     st.switch_page("pages/book.py")
+                st.markdown(f"author(s): {', '.join(map(str, book['authors']))}")
                 st.markdown(f"ISBN: `{book['isbn']}`")
                 st.markdown(f"published year: `{book['published_year']}`")
                 st.write(f"desc: `{book['description']}`")

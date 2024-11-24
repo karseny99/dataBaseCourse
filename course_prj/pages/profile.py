@@ -139,7 +139,7 @@ def display_admin_page(user_info: dict) -> None:
         user_id = set_admin_role(new_admin_id)
 
         if not user_id:
-            st.error(f"Cannot assign admin to unexisted person-{new_admin_id}")
+            st.error(f"User-{new_admin_id} haven't sent request, cannot assign")
         else:
             st.success(f"New admin-{user_id} added")
 

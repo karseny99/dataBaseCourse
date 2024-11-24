@@ -6,7 +6,7 @@ from models.download_model import Download
 from repositories.connector import *
 
 from sqlalchemy import exists
-
+from services.logger import *
 from datetime import datetime
 
 def delete_comment(comment_id: int) -> int:
@@ -17,13 +17,21 @@ def delete_comment(comment_id: int) -> int:
     '''
 
     with get_session() as session:
-        deletion_request = session.query(Comment).filter(Comment.comment_id == comment_id).one_or_none()
+        query = text("""
+            SELECT * FROM comments 
+            WHERE comment_id = :comment_id
+        """)
+
+        deletion_request = session.execute(query, {"comment_id": comment_id}).fetchone()
         
         if not deletion_request:
             return None
-
-        session.delete(deletion_request)
-        session.commit()
+        
+        delete_query = text("""
+            DELETE FROM comments 
+            WHERE comment_id = :comment_id
+        """)
+        session.execute(delete_query, {"comment_id": comment_id})
 
         return comment_id
 
@@ -34,18 +42,24 @@ def add_comment(book_id: int, user_id: int, comment: str) -> int:
         Returns new comment_id
     '''
     with get_session() as session:
-        new_comment = Comment(
-            user_id=user_id,
-            book_id=book_id,
-            comment=comment,
-            commented_at=datetime.now()
-        )
 
-        session.add(new_comment)
-        session.commit()
+        insert_query = text("""
+            INSERT INTO comments (user_id, book_id, comment, commented_at)
+            VALUES (:user_id, :book_id, :comment, :commented_at)
+            RETURNING comment_id
+        """)
 
-        print(f"New comment with id {new_comment.comment_id} from {user_id}-user to {book_id}-book")
-        return new_comment.comment_id
+        new_comment = session.execute(insert_query, {
+            'user_id': user_id,
+            'book_id': book_id,
+            'comment': comment,
+            'commented_at': datetime.now()
+        })
+
+        new_comment_id = new_comment.fetchone()[0]
+
+        logging.info(f"New comment with id {new_comment_id} from {user_id}-user to {book_id}-book")
+        return new_comment_id
 
 
 def get_last_comments(book_id: int, comments_n: int = 10) -> list:
@@ -54,14 +68,22 @@ def get_last_comments(book_id: int, comments_n: int = 10) -> list:
     '''
 
     with get_session() as session:
-        comments = session.query(Comment).filter(Comment.book_id == book_id) \
-            .order_by(Comment.commented_at.desc()).limit(comments_n).all()
+        select_query = text("""
+            SELECT comment_id, user_id, book_id, comment, commented_at
+            FROM comments
+            WHERE book_id = :book_id
+            ORDER BY commented_at DESC
+            LIMIT :comments_n
+        """)
 
-        if not comments:
-            return []
-    
-        comments = [Comment.from_orm(comm) for comm in comments]
+        comments = session.execute(select_query, {
+            'book_id': book_id,
+            'comments_n': comments_n
+        }).mappings()
+
+        comments = [Comment.from_dict(dict(comm)) for comm in comments]
         return comments
+
 
 # unnecessary
 def get_user_comments_info(user_id: int) -> list:
@@ -71,15 +93,15 @@ def get_user_comments_info(user_id: int) -> list:
     '''
 
     with get_session() as session:
-        items = session.query(
-            Comment.comment_id, 
-            Comment.comment,
-            Comment.commented_at,
-            Book.book_id,
-            Book.title
-        ).join(Book, Book.book_id == Comment.book_id) \
-            .filter(Comment.user_id == user_id).all()
-    
+        select_query = text("""
+            SELECT c.comment_id, c.comment, c.commented_at, b.book_id, b.title
+            FROM comments c
+            JOIN books b ON b.book_id = c.book_id
+            WHERE c.user_id = :user_id
+        """)
+
+        items = session.execute(select_query, {'user_id': user_id})
+
         items = [
             {
                 "comment_id": comment_id,
@@ -102,25 +124,25 @@ def get_user_actions(user_id: int) -> list:
 
     with get_session() as session:
 
-        items = session.query(
-            Book.book_id,
-            Book.title,
-            func.max(Rating.rating),
-            func.max(Rating.rated_at),
-            func.count(Comment.comment).label("comment_count"),
-            func.max(Download.download_date).label("last_download_date")
-        ) \
-            .outerjoin(Rating, (Rating.book_id == Book.book_id) & (Rating.user_id == user_id)) \
-            .outerjoin(Comment, (Comment.book_id == Book.book_id) & (Comment.user_id == user_id)) \
-            .outerjoin(Download, (Download.book_id == Book.book_id) & (Download.user_id == user_id)) \
-        .group_by(Book.book_id, Book.title) \
-        .having(
-            func.max(Rating.rating).isnot(None) |
-            (func.count(Comment.comment) > 0) |
-            func.max(Download.download_date).isnot(None)
-        ) \
-        .all()
-
+        select_query = text("""
+            SELECT 
+                b.book_id,
+                b.title,
+                MAX(r.rating) AS rating,
+                MAX(r.rated_at) AS rated_at,
+                COUNT(c.comment) AS comment_count,
+                MAX(d.download_date) AS last_download_date
+            FROM books b
+            LEFT JOIN ratings r ON r.book_id = b.book_id AND r.user_id = :user_id
+            LEFT JOIN comments c ON c.book_id = b.book_id AND c.user_id = :user_id
+            LEFT JOIN downloads d ON d.book_id = b.book_id AND d.user_id = :user_id
+            GROUP BY b.book_id, b.title
+            HAVING 
+                MAX(r.rating) IS NOT NULL OR 
+                COUNT(c.comment) > 0 OR 
+                MAX(d.download_date) IS NOT NULL
+        """)
+        items = session.execute(select_query, {'user_id': user_id})
 
         items = [
             {

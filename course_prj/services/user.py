@@ -117,44 +117,6 @@ def set_admin_role(user_id: int) -> int:
     return set_user_admin(user_id)
 
 
-import subprocess
-
-# def create_database_dump(db_name, user, password):
-#     '''
-#         Creates dump of database,
-#         Returns created dump file
-#         None if auth data is wrong
-#     '''
-
-#     filename = 'storage/db.dump'
-
-#     try:
-#         os.environ['PGPASSWORD'] = password
-
-#         command = [
-#             'pg_dump',
-#             '-d', db_name,
-#             '-U', user,
-#             '-h', 'localhost',
-#             '-p', '5432',
-#             '-F', 'c', 
-#             '-f', filename
-#         ]
-
-#         subprocess.run(command, capture_output=True, check=True, text=True)
-#     except subprocess.CalledProcessError as e:
-#         # print(f"Cannot create dump of database, because of {e}")
-
-#         if "authentication failed" in e.stderr.lower():
-#             return None
-#         elif "connection" in e.stderr.lower():
-#             print(f"Cannot create dump of database, because of {e}")
-#             raise OperationalError("Database connection error")
-#     finally:
-#         del os.environ['PGPASSWORD']
-
-#     return filename
-# create_database_dump('postgres', 'postgres', 'localhost', '5432', 'file', '1')
         
 def restore_database_dump(input_file) -> None:
     '''

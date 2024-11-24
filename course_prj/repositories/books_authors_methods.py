@@ -11,18 +11,24 @@ def get_books_from_author(author_name: str) -> list:
     '''
     
     with get_session() as session:
-        authors = session.query(Author).filter(Author.name.ilike(f"%{author_name}%")).all()
-        authors = [Author.from_orm(author) for author in authors]
+        query = text("SELECT author_id FROM authors WHERE name ILIKE :author_name")
 
-        if not authors:
+        authors = session.execute(query, {"author_name": f"%{author_name}%"})
+        author_ids = [author[0] for author in authors]
+
+        if not author_ids:
             return [] 
 
-        books = []
+        query = text("""
+            SELECT b.* 
+            FROM books b
+            JOIN book_authors ba ON b.book_id = ba.book_id
+            WHERE ba.author_id IN :author_ids
+        """)
 
-        for author in authors:
-            books += session.query(Book).join(BookAuthor, Book.book_id == BookAuthor.book_id).filter(BookAuthor.author_id == author.author_id).all()
-        
-        books = [Book.from_orm(book) for book in books]
+        books = session.execute(query, {"author_ids": tuple(author_ids)}).mappings()
+        books = [Book.from_dict(dict(book)) for book in books]
+
         return books
 
 
@@ -33,10 +39,17 @@ def get_authors_from_book(book_id: int) -> list:
     '''
 
     with get_session() as session:
-        authors = session.query(Author) \
-            .join(BookAuthor, Author.author_id == BookAuthor.author_id) \
-                .filter(BookAuthor.book_id == book_id).all()
-        authors = [Author.from_orm(author) for author in authors]
+
+        query = text("""
+            SELECT a.* 
+            FROM authors a
+            JOIN book_authors ba ON a.author_id = ba.author_id
+            WHERE ba.book_id = :book_id
+        """)
+
+        authors = session.execute(query, {"book_id": book_id}).mappings()
+
+        authors = [Author.from_dict(dict(author)) for author in authors]
         return authors
 
 
@@ -48,21 +61,30 @@ def insert_authors_by_book(authors: list, book_id: int) -> None:
     with get_session() as session:
 
         for author in authors:
-            author_obj = session.query(Author).filter(Author.name.ilike(author)).one_or_none()
+
+            query = text("""
+                SELECT author_id 
+                FROM authors    
+                WHERE name ILIKE :author_name
+            """)
+
+
+            author_obj = session.execute(query, {"author_name": author}).fetchone()
 
             if not author_obj:
-                author_obj = Author(
-                    name=author,
-                    bio=None
-                )
-                session.add(author_obj)
-                session.commit()
-            
-            new_book_author_relation = BookAuthor(
-                author_id=author_obj.author_id,
-                book_id=book_id
-            )
-            session.add(new_book_author_relation)
+                insert_query = text("""
+                    INSERT INTO authors (name, bio) 
+                    VALUES (:name, :bio) 
+                    RETURNING author_id
+                """)
+
+                author_obj = session.execute(insert_query, {"name": author, "bio": None}).fetchone()
+        
+            insert_relation_query = text("""
+                INSERT INTO book_authors (book_id, author_id) 
+                VALUES (:book_id, :author_id)
+            """)
+            session.execute(insert_relation_query, {"book_id": book_id, "author_id": author_obj[0]})
+
         logging.info(f"{authors} was inserted to book-author table")
-        session.commit()
     

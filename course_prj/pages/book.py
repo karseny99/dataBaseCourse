@@ -39,17 +39,17 @@ def show_main_info(book: dict) -> None:
 
     st.write(f"ISBN {book['isbn']}")
 
-    st.write(f"Published in {book['published_year']}")
+    st.write(f"Published in {book.get('published_year', 'Unknown')}")
 
-    authors = "".join(f"{author}," for author in book['authors'])[:-1]
+    authors = "".join(f"{author}," for author in book.get('authors', ''))[:-1]
 
     st.markdown(f"Author(s) - {authors}")
 
-    categories = "".join(f" {category}," for category in book['categories'])[:-1]
+    categories = "".join(f" {category}," for category in book.get('categories', ''))[:-1]
 
     st.markdown(f"Categories - {categories}")
 
-    st.write(f"description - {book['description']}")
+    st.write(f"description - {book.get('description', '')}")
 
     st.markdown("---")
 
@@ -149,7 +149,7 @@ def last_comments(book_id: int) -> None:
    
 
   
-
+@error_handler
 def book_page() -> None:
     '''
         book's page

@@ -40,7 +40,7 @@ def backup_database() -> None:
     db_host = os.getenv('DB_HOST')
     db_port = os.getenv('DB_PORT')
 
-    dump_file = save_path + f"backup_{datetime.now().strftime('%d.%m.%Y_%H.%M.%S')}.dump"
+    dump_file = save_path + f"backup_{db_name}_{datetime.now().strftime('%d.%m.%Y_%H.%M.%S')}.dump"
 
     dump_db(dump_file, db_name, db_user, db_password, db_host, db_port)
 

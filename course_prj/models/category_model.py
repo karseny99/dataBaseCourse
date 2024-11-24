@@ -1,17 +1,16 @@
 from sqlalchemy import Column, Integer, String
 from sqlalchemy.ext.declarative import declarative_base
 
-Base = declarative_base()
-
-class Category(Base):
+class Category():
     __tablename__ = 'categories'
     
-    category_id = Column(Integer, primary_key=True, autoincrement=True)
-    category_name = Column(String(100), nullable=False)
+    def __init__(self, category_id: int, category_name: str):
+        self.category_id = category_id
+        self.category_name = category_name
 
     @classmethod 
-    def from_orm(cls, category_orm):
+    def from_dict(cls, category_dict):
         return cls(
-            category_id=category_orm.category_id,
-            category_name=category_orm.category_name
+            category_id=int(category_dict['category_id']),
+            category_name=category_dict['category_name']
         )

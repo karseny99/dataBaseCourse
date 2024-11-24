@@ -1,8 +1,7 @@
 
 from repositories.connector import *
-from models.author_model import Author
-from sqlalchemy.orm.exc import NoResultFound
 
+from models.author_model import Author
 
 def get_authors_by_name(authors_name: str) -> list:
     '''
@@ -10,6 +9,12 @@ def get_authors_by_name(authors_name: str) -> list:
         Returns a list of author objects
     '''
     with get_session() as session:
-        authors = session.query(Author).filter(Author.name.ilike(f"%{authors_name}%")).all()
-        authors = [Author.from_orm(obj) for obj in authors]
+
+        query = text("""
+            SELECT * FROM authors 
+            WHERE name ILIKE :name
+        """)
+
+        authors = session.execute(query, {"name": f"%{authors_name}%"}).mappings()
+        authors = [Author.from_dict(dict(obj)) for obj in authors]
         return authors

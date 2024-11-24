@@ -34,4 +34,4 @@ def get_book_personal_rating(book_id: int, user_id: int) -> dict:
     if not rating_info:
         return None
 
-    return rating_info.__dict__
+    return rating_info

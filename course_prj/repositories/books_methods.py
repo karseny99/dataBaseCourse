@@ -18,12 +18,15 @@ def search_in_column(search_value: str, column_name: str) -> list:
     if column_name == 'author':
         return search_by_author(search_value)
 
-    column = getattr(Book, column_name)
+    query = text(f"""
+        SELECT b.* 
+        FROM books b
+        WHERE b.{column_name} ILIKE :search_value
+    """)
 
     with get_session() as session:
-        matched_books = session.query(Book).filter(column.ilike(f"%{search_value}%")).all()
-        matched_books = [Book.from_orm(obj) for obj in matched_books]
-        print(matched_books, column_name)
+        matched_books = session.execute(query, {"search_value": f"%{search_value}%"}).mappings()
+        matched_books = [Book.from_dict(book) for book in matched_books]
         return matched_books
 
 
@@ -41,13 +44,21 @@ def get_book_by_id(book_id: int) -> Book:
         None if not found
     '''
     with get_session() as session:
-        try:
-            book = Book.from_orm(session.query(Book).filter_by(book_id=book_id).one())
-            return book
-        except NoResultFound:
-            return None
-        
 
+        query = text("""
+            SELECT * FROM books 
+            WHERE book_id = :book_id
+        """)
+        
+        result = session.execute(query, {"book_id": book_id}).mappings().fetchone()
+        
+        if result is None:
+            return None 
+        
+        book = Book.from_dict(dict(result))
+        return book
+
+        
 def get_book_categories(book_id: int) -> list:
     '''
         Calls function for another table to find all categories of the book
@@ -55,12 +66,14 @@ def get_book_categories(book_id: int) -> list:
     '''
     return repositories.book_categories.get_book_categories(book_id)
 
+
 def get_book_ids() -> list:
     '''
         Returns list of existed book_id
     '''
     with get_session() as session:
-        book_ids = session.query(Book.book_id).all()
+        query = text("SELECT book_id FROM books")
+        book_ids = session.execute(query)
         return [book_id[0] for book_id in book_ids]
     
 
@@ -71,17 +84,21 @@ def add_book(book_item: dict) -> int:
     '''
 
     with get_session() as session:
-        new_book = Book(
-            title=book_item['title'],
-            published_year=book_item.get('published_year'),
-            isbn=book_item['isbn'],
-            description=book_item.get('description'),
-            added_at=datetime.now(),
-            file_path=book_item.get('file_path'),
-            cover_image_path=book_item.get('cover_image_path')
-        )
+        insert_query = text("""
+            INSERT INTO books (title, published_year, isbn, description, added_at, file_path, cover_image_path) 
+            VALUES (:title, :published_year, :isbn, :description, :added_at, :file_path, :cover_image_path) 
+            RETURNING book_id
+        """)
+        new_book = session.execute(insert_query, {
+            "title": book_item['title'],
+            "published_year": book_item.get('published_year'),
+            "isbn": book_item['isbn'],
+            "description": book_item.get('description'),
+            "added_at": datetime.now(),
+            "file_path": book_item.get('file_path'),
+            "cover_image_path": book_item.get('cover_image_path')
+        })
 
-        session.add(new_book)
-        session.commit()
-        logging.info(f"Inserted new book_id={new_book.book_id} into a book-table")
-        return new_book.book_id
+        new_book_id = new_book.fetchone()[0]
+        logging.info(f"Inserted new book_id={new_book_id} into a book-table")
+        return new_book_id

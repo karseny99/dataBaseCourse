@@ -3,7 +3,7 @@ from services.search import *
 
 from services.error_handler import error_handler
 
-# @error_handler
+@error_handler
 def search_page() -> None:
     '''
         search page

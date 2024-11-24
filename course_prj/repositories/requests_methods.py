@@ -12,21 +12,33 @@ def add_request(user_id: int) -> int:
 
     with get_session() as session:
         seven_days_ago = datetime.now() - timedelta(days=7)
-        old_request = session.query(Request).filter((Request.user_id == user_id) \
-                & (Request.request_date >= seven_days_ago)).one_or_none()
+        select_query = text("""
+            SELECT request_id 
+            FROM admin_requests 
+            WHERE user_id = :user_id AND request_date >= :seven_days_ago
+        """)
+
+        old_request = session.execute(select_query, {
+            'user_id': user_id,
+            'seven_days_ago': seven_days_ago
+        }).fetchone()
 
         if old_request:
             return None 
 
-        new_request = Request(
-            user_id=user_id,
-            request_date=datetime.now()
-        )
+        insert_query = text("""
+            INSERT INTO admin_requests (user_id, request_date)
+            VALUES (:user_id, :request_date)
+            RETURNING request_id
+        """)
 
-        session.add(new_request)
-        session.commit()
+        new_request = session.execute(insert_query, {
+            'user_id': user_id,
+            'request_date': datetime.now()
+        })
 
-        return new_request.request_id
+        new_request_id = new_request.fetchone()[0]
+        return new_request_id
 
 
 def get_admin_requested_users() -> list:
@@ -35,7 +47,12 @@ def get_admin_requested_users() -> list:
     '''
 
     with get_session() as session:
-        user_ids = session.query(Request.user_id).all()
+        select_query = text("""
+            SELECT user_id 
+            FROM admin_requests
+        """)
+        users = session.execute(select_query)
+        user_ids = [user[0] for user in users]
         return user_ids
     
 
@@ -47,14 +64,24 @@ def remove_from_requests(user_id: int) -> int:
     '''
 
     with get_session() as session:
-        request = session.query(Request).filter(Request.user_id == user_id).one_or_none()
+        select_query = text("""
+            SELECT request_id 
+            FROM admin_requests 
+            WHERE user_id = :user_id
+        """)
+
+        result = session.execute(select_query, {'user_id': user_id})
+        request = result.fetchone()
 
         if not request:
             return None
         
-        request_id = request.request_id
+        request_id = request[0]
 
-        session.delete(request)
-        session.commit()
-
+        delete_query = text("""
+            DELETE FROM admin_requests 
+            WHERE request_id = :request_id
+        """)
+        session.execute(delete_query, {'request_id': request_id})
+        
         return request_id

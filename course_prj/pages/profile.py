@@ -58,14 +58,22 @@ def book_uploading() -> None:
             and len(book_item['isbn']) \
             and len(book_item['authors']) \
             :
-            path_list = services.book.load_to_storage(upload_book, upload_cover)
-            book_item['file_path'] = path_list[0]
-            if len(path_list) > 1: book_item['cover_image_path'] = path_list[1]
+            is_unique = services.book.validate_isbn(book_item['isbn'])
+            if not is_unique:
+                st.error("ISBN is not correct")
+            else:
+                path_list = services.book.load_to_storage(upload_book, upload_cover)
+                book_item['file_path'] = path_list[0]
+                if len(path_list) > 1: book_item['cover_image_path'] = path_list[1]
 
-            st.success(f"Book added to database with id {services.book.add_book(book_item)}")
+                book_id = services.book.add_book(book_item)
+                if not book_id:
+                    st.error("ISBN is not unique")
+                else:
+                    st.success(f"Book added to database with id {book_id}")
 
-            if st.button("Upload more"):
-                st.rerun() 
+                if st.button("Upload more"):
+                    st.rerun() 
         else:
             if submit_button:
                 st.error("You didn't fill important fields")
@@ -87,7 +95,7 @@ def admin_requests() -> None:
 
 
 
-@error_handler
+# @error_handler
 def show_dump_recovery() -> None:
     with st.sidebar:
         st.header("database recovery")
@@ -151,7 +159,7 @@ def display_admin_page(user_info: dict) -> None:
 
 
 
-@error_handler
+# @error_handler
 def profile_page() -> None:
     try:
         user_id = st.session_state.user_id

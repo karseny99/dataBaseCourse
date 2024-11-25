@@ -102,3 +102,23 @@ def add_book(book_item: dict) -> int:
         new_book_id = new_book.fetchone()[0]
         logging.info(f"Inserted new book_id={new_book_id} into a book-table")
         return new_book_id
+
+
+def find_isbn(isbn: str) -> int:
+    '''
+        Returns for matched isbn book_id
+        Or None if unmatched
+    '''
+    with get_session() as session:
+        query = text("""
+            SELECT book_id
+            FROM books
+            WHERE isbn = :isbn
+        """) 
+
+        book_id = session.execute(query, {"isbn": isbn}).mappings().fetchone()
+        
+        if book_id is None:
+            return None 
+        
+        return book_id

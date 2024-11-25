@@ -8,7 +8,7 @@ def get_authors_by_name(authors_name: str) -> list:
         For given author's name getting all fit authors
         Returns a list of author objects
     '''
-    with get_session() as session:
+    with get_session(Reader) as session:
 
         query = text("""
             SELECT * FROM authors 

@@ -11,7 +11,7 @@ def add_download_event(user_id: int, book_id: int) -> int:
         Returns new download_id
     '''
 
-    with get_session() as session:
+    with get_session(Reader) as session:
 
         insert_query = text("""
             INSERT INTO downloads (user_id, book_id, download_date)
@@ -37,7 +37,7 @@ def get_downloads_info(user_id: int) -> list:
         item = [download_id, download_date, book_id, book's title]
     '''
 
-    with get_session() as session:
+    with get_session(Reader) as session:
         select_query = text("""
             SELECT 
                 d.download_id, 

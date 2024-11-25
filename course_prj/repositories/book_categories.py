@@ -10,7 +10,7 @@ def get_book_categories(book_id: str) -> list:
         Returns all book's categories
     '''
     
-    with get_session() as session:
+    with get_session(Reader) as session:
 
         query = text("""
             SELECT c.* 
@@ -29,7 +29,7 @@ def insert_categories_by_book(categories: list, book_id: int) -> None:
         Inserts a list of categories related to book_id
     '''
 
-    with get_session() as session:
+    with get_session(Admin) as session:
         for category in categories:
             query = text("""
                 SELECT category_id 

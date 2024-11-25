@@ -9,7 +9,7 @@ def get_scored_books(user_id: int) -> list:
         Returns all scored book_ids for user_id
     '''
 
-    with get_session() as session:
+    with get_session(Reader) as session:
         select_query = text("""
             SELECT book_id 
             FROM ratings 
@@ -26,7 +26,7 @@ def add_or_update_rating(book_id: int, user_id: int, rating: int) -> int:
         Appends rating for book_id from user_id or updates existed
         Returns new rating_id
     '''
-    with get_session() as session:
+    with get_session(Reader) as session:
         select_query = text("""
             SELECT rating_id 
             FROM ratings 
@@ -79,7 +79,7 @@ def get_book_score_from_user(book_id: int, user_id: int) -> dict:
         Return rating and rated_at date
     '''
 
-    with get_session() as session:
+    with get_session(Reader) as session:
         select_query = text("""
             SELECT rating, rated_at 
             FROM ratings 
@@ -101,7 +101,7 @@ def get_book_rating_info(book_id: int) -> dict:
         None if not exists
     '''
 
-    with get_session() as session:
+    with get_session(Reader) as session:
         select_query = text("""
             SELECT 
                 COUNT(rating_id) AS ratings_count, 
@@ -126,7 +126,7 @@ def get_scored_books_info(user_id: int) -> list:
         item = [book_id, book's title, rating, rated_at]
     '''
 
-    with get_session() as session:
+    with get_session(Reader) as session:
         
         select_query = text("""
             SELECT 

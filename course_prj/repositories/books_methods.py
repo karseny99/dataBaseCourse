@@ -24,7 +24,7 @@ def search_in_column(search_value: str, column_name: str) -> list:
         WHERE b.{column_name} ILIKE :search_value
     """)
 
-    with get_session() as session:
+    with get_session(Reader) as session:
         matched_books = session.execute(query, {"search_value": f"%{search_value}%"}).mappings()
         matched_books = [Book.from_dict(book) for book in matched_books]
         return matched_books
@@ -43,7 +43,7 @@ def get_book_by_id(book_id: int) -> Book:
         Returns Book for given book_id
         None if not found
     '''
-    with get_session() as session:
+    with get_session(Reader) as session:
 
         query = text("""
             SELECT * FROM books 
@@ -71,7 +71,7 @@ def get_book_ids() -> list:
     '''
         Returns list of existed book_id
     '''
-    with get_session() as session:
+    with get_session(Reader) as session:
         query = text("SELECT book_id FROM books")
         book_ids = session.execute(query)
         return [book_id[0] for book_id in book_ids]
@@ -83,7 +83,7 @@ def add_book(book_item: dict) -> int:
         Returns new book_id
     '''
 
-    with get_session() as session:
+    with get_session(Admin) as session:
         insert_query = text("""
             INSERT INTO books (title, published_year, isbn, description, added_at, file_path, cover_image_path) 
             VALUES (:title, :published_year, :isbn, :description, :added_at, :file_path, :cover_image_path) 
@@ -109,7 +109,7 @@ def find_isbn(isbn: str) -> int:
         Returns for matched isbn book_id
         Or None if unmatched
     '''
-    with get_session() as session:
+    with get_session(Reader) as session:
         query = text("""
             SELECT book_id
             FROM books

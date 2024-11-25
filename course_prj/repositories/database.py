@@ -9,7 +9,7 @@ def restore_database_from_file(filename: str) -> None:
         Deletes all tables & triggers, then calls for recovery
         If unsuccessfully then rollbacks db
     '''
-    with get_session() as session:
+    with get_session(Admin) as session:
         db_recovery(filename)
 
 def db_recovery(filename: str) -> None:

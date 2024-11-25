@@ -14,7 +14,7 @@ def add_new_user(username: str, email: str, password_hash: str, role = 'reader')
     '''
 
 
-    with get_session() as session:
+    with get_session(Authenticator) as session:
         insert_query = text("""
             INSERT INTO users (username, email, password_hash, role, register_date)
             VALUES (:username, :email, :password_hash, :role, :register_date)
@@ -39,7 +39,7 @@ def get_all_usernames() -> list:
     '''
         Returns all registered usernames
     '''
-    with get_session() as session:
+    with get_session(Authenticator) as session:
         usernames = session.execute(text("SELECT username FROM users")).fetchall()
         return [username[0] for username in usernames]
 
@@ -48,7 +48,7 @@ def get_all_emails() -> list:
     '''
         Returns all registered emails
     '''
-    with get_session() as session:
+    with get_session(Authenticator) as session:
         emails = session.execute(text("SELECT email FROM users")).fetchall()
         return [email[0] for email in emails]
     
@@ -58,7 +58,7 @@ def get_user_info(login: str) -> User:
         Returns info about user with given login 
     '''
 
-    with get_session() as session:
+    with get_session(Authenticator) as session:
         user = None
         try:
             query = text("""
@@ -91,7 +91,7 @@ def get_user_id_info(user_id: int) -> User:
         Returns info about user with given user_id 
     '''
 
-    with get_session() as session:
+    with get_session(Reader) as session:
         query = text("""
             SELECT * 
             FROM users 
@@ -109,7 +109,7 @@ def get_user_ids() -> list:
     '''
         Returns list of existed user_ids
     '''
-    with get_session() as session:
+    with get_session(Reader) as session:
         query = text("SELECT user_id FROM users")
 
         user_ids = session.execute(query).fetchall()
@@ -122,7 +122,7 @@ def set_user_admin(user_id: int) -> int:
         None otherwise
     '''
 
-    with get_session() as session:
+    with get_session(Admin) as session:
         query = text("""
             SELECT user_id 
             FROM users 

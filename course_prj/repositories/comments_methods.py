@@ -16,7 +16,7 @@ def delete_comment(comment_id: int) -> int:
         None otherwise
     '''
 
-    with get_session() as session:
+    with get_session(Admin) as session:
         query = text("""
             SELECT * FROM comments 
             WHERE comment_id = :comment_id
@@ -41,7 +41,7 @@ def add_comment(book_id: int, user_id: int, comment: str) -> int:
         Appends new comment of book_id from user_id to database
         Returns new comment_id
     '''
-    with get_session() as session:
+    with get_session(Reader) as session:
 
         insert_query = text("""
             INSERT INTO comments (user_id, book_id, comment, commented_at)
@@ -67,7 +67,7 @@ def get_last_comments(book_id: int, comments_n: int = 10) -> list:
         Returns last 10 comments from book_id
     '''
 
-    with get_session() as session:
+    with get_session(Reader) as session:
         select_query = text("""
             SELECT comment_id, user_id, book_id, comment, commented_at
             FROM comments
@@ -92,7 +92,7 @@ def get_user_comments_info(user_id: int) -> list:
         returns item is [comment_id, comment, commented_at, book_id, book's title]
     '''
 
-    with get_session() as session:
+    with get_session(Reader) as session:
         select_query = text("""
             SELECT c.comment_id, c.comment, c.commented_at, b.book_id, b.title
             FROM comments c
@@ -122,7 +122,7 @@ def get_user_actions(user_id: int) -> list:
         returns item is [book_id, title, rating, rated_at, comment_count, last_download_date]
     '''
 
-    with get_session() as session:
+    with get_session(Reader) as session:
 
         select_query = text("""
             SELECT 

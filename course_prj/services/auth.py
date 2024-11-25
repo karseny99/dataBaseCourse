@@ -15,8 +15,6 @@ class WrongEnterException(LoginException):
         super().__init__(self.message)
 
 
-
-
 class Authentication:
 
     def login_user(login: str, password: str) -> int:

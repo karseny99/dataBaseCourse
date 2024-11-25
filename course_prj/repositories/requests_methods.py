@@ -10,7 +10,7 @@ def add_request(user_id: int) -> int:
         None if request date was not expired
     '''
 
-    with get_session() as session:
+    with get_session(Reader) as session:
         seven_days_ago = datetime.now() - timedelta(days=7)
         select_query = text("""
             SELECT request_id 
@@ -46,7 +46,7 @@ def get_admin_requested_users() -> list:
         Returns list of user_ids who sent admin request
     '''
 
-    with get_session() as session:
+    with get_session(Admin) as session:
         select_query = text("""
             SELECT user_id 
             FROM admin_requests
@@ -63,7 +63,7 @@ def remove_from_requests(user_id: int) -> int:
         None otherwise
     '''
 
-    with get_session() as session:
+    with get_session(Admin) as session:
         select_query = text("""
             SELECT request_id 
             FROM admin_requests 

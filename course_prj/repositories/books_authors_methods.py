@@ -10,7 +10,7 @@ def get_books_from_author(author_name: str) -> list:
         Returns all books written by author_name
     '''
     
-    with get_session() as session:
+    with get_session(Reader) as session:
         query = text("SELECT author_id FROM authors WHERE name ILIKE :author_name")
 
         authors = session.execute(query, {"author_name": f"%{author_name}%"})
@@ -38,7 +38,7 @@ def get_authors_from_book(book_id: int) -> list:
         None if wrong book_id
     '''
 
-    with get_session() as session:
+    with get_session(Reader) as session:
 
         query = text("""
             SELECT a.* 
@@ -58,7 +58,7 @@ def insert_authors_by_book(authors: list, book_id: int) -> None:
         Inserts a list of authors related to book_id
     '''
 
-    with get_session() as session:
+    with get_session(Admin) as session:
 
         for author in authors:
 

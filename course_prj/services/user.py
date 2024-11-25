@@ -78,7 +78,7 @@ def get_info_data_file() -> str:
     with open(save_path, "a") as data_file:
 
         for user_id in users_requested:
-            info_data = get_info_actions_user(user_id[0])
+            info_data = get_info_actions_user(user_id)
 
             # Cleaning given dict for json dump
             info_data.pop('_sa_instance_state', None)

@@ -95,7 +95,7 @@ def admin_requests() -> None:
 
 
 
-# @error_handler
+@error_handler
 def show_dump_recovery() -> None:
     with st.sidebar:
         st.header("database recovery")
@@ -159,7 +159,7 @@ def display_admin_page(user_info: dict) -> None:
 
 
 
-# @error_handler
+@error_handler
 def profile_page() -> None:
     try:
         user_id = st.session_state.user_id

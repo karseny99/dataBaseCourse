@@ -7,7 +7,9 @@ from services.error_handler import error_handler
 @error_handler
 def admin_panel() -> None:
 
-    if not(is_admin()) or st.button("Back"):
+    go_back = st.button("Back")
+
+    if not(is_admin()) or go_back:
         st.switch_page("main.py")
 
 

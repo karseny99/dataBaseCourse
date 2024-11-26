@@ -12,23 +12,10 @@ BEGIN
         CREATE ROLE admin LOGIN PASSWORD '1';
     END IF;
 
-    IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'authenticator') THEN
-        CREATE USER authenticator WITH PASSWORD '1';
-        GRANT authenticator TO user1;
-    END IF;
+    GRANT USAGE, SELECT ON SEQUENCE users_user_id_seq TO authenticator;
 
-    IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'reader') THEN
-        CREATE USER reader WITH PASSWORD '1';
-        GRANT reader TO reader; 
-    END IF;
-
-    IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'admin') THEN
-        CREATE USER admin WITH PASSWORD '1';
-        GRANT admin TO admin;
-    END IF;
-
-    -- Auth permissions
-    GRANT SELECT, INSERT ON users TO authenticator;
+    GRANT INSERT, SELECT ON users TO authenticator;
+    GRANT SELECT ON user_roles TO authenticator;
 
     -- Reader's permissions
     GRANT SELECT ON books TO reader;
@@ -43,6 +30,16 @@ BEGIN
     GRANT SELECT, INSERT, UPDATE ON downloads TO reader;
     GRANT SELECT, INSERT, UPDATE ON ratings TO reader;
 
+    GRANT SELECT ON comments_view TO reader;
+    GRANT SELECT ON downloads_view TO reader;
+    GRANT SELECT ON ratings_view TO reader;
+    GRANT SELECT ON books_with_authors TO reader;
+    GRANT SELECT ON books_with_categories TO reader;
+    GRANT SELECT ON user_roles TO reader;
+    GRANT SELECT ON books_full_info TO reader;
+    GRANT EXECUTE ON FUNCTION get_paginated_books(INT, INT, VARCHAR, INT, VARCHAR) TO reader;
+
+
     GRANT USAGE, SELECT ON SEQUENCE comments_comment_id_seq TO reader;
     GRANT USAGE, SELECT ON SEQUENCE downloads_download_id_seq TO reader;
     GRANT USAGE, SELECT ON SEQUENCE ratings_rating_id_seq TO reader;
@@ -52,5 +49,6 @@ BEGIN
     GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO admin;  
     GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO admin;  
     GRANT ALL PRIVILEGES ON ALL FUNCTIONS IN SCHEMA public TO admin;  
+    GRANT USAGE ON SCHEMA public TO admin;
 
 END $$;

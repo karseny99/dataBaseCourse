@@ -18,3 +18,18 @@ def get_authors_by_name(authors_name: str) -> list:
         authors = session.execute(query, {"name": f"%{authors_name}%"}).mappings()
         authors = [Author.from_dict(dict(obj)) for obj in authors]
         return authors
+    
+
+def get_all_authors() -> list:
+    '''
+        Returns list of distinct authors
+    '''
+
+    query = text("""
+        SELECT name
+        FROM authors
+    """)
+
+    with get_session(Reader) as session:
+        authors = session.execute(query).scalars().all()
+        return authors

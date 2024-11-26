@@ -69,8 +69,8 @@ def get_last_comments(book_id: int, comments_n: int = 10) -> list:
 
     with get_session(Reader) as session:
         select_query = text("""
-            SELECT comment_id, user_id, book_id, comment, commented_at
-            FROM comments
+            SELECT * 
+            FROM comments_view 
             WHERE book_id = :book_id
             ORDER BY commented_at DESC
             LIMIT :comments_n
@@ -81,7 +81,7 @@ def get_last_comments(book_id: int, comments_n: int = 10) -> list:
             'comments_n': comments_n
         }).mappings()
 
-        comments = [Comment.from_dict(dict(comm)) for comm in comments]
+        comments = [dict(comm) for comm in comments]
         return comments
 
 
@@ -133,9 +133,9 @@ def get_user_actions(user_id: int) -> list:
                 COUNT(c.comment) AS comment_count,
                 MAX(d.download_date) AS last_download_date
             FROM books b
-            LEFT JOIN ratings r ON r.book_id = b.book_id AND r.user_id = :user_id
-            LEFT JOIN comments c ON c.book_id = b.book_id AND c.user_id = :user_id
-            LEFT JOIN downloads d ON d.book_id = b.book_id AND d.user_id = :user_id
+            LEFT JOIN ratings_view r ON r.book_id = b.book_id AND r.user_id = :user_id
+            LEFT JOIN comments_view c ON c.book_id = b.book_id AND c.user_id = :user_id
+            LEFT JOIN downloads_view d ON d.book_id = b.book_id AND d.user_id = :user_id
             GROUP BY b.book_id, b.title
             HAVING 
                 MAX(r.rating) IS NOT NULL OR 

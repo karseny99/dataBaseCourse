@@ -9,24 +9,91 @@ import repositories.book_categories
 import repositories.ratings_methods
 from services.logger import logging
 
-def search_in_column(search_value: str, column_name: str) -> list:
+
+def get_publishing_years() -> list:
     '''
-        Searching for given title in title column 
-        Returns list of matched books
+        Returns list of all publishing years
     '''
 
-    if column_name == 'author':
-        return search_by_author(search_value)
+    with get_session(Reader) as session:
+        query = text("""
+            SELECT published_year
+            FROM books
+        """)
 
-    query = text(f"""
-        SELECT b.* 
-        FROM books b
-        WHERE b.{column_name} ILIKE :search_value
+        years = session.execute(query).scalars().all()
+        return years
+
+def get_books(offset: int, limit: int) -> list:
+    '''
+        Returns by offset limit books with authors and categories
+    '''
+
+    query = text("""
+        SELECT                 
+                book_id, 
+                title, 
+                published_year, 
+                isbn, 
+                description,
+                array_agg(DISTINCT author_name) AS authors,
+                array_agg(DISTINCT category_name) AS categories
+        FROM books_full_info
+        GROUP BY book_id, title, published_year, isbn, description
+        ORDER BY book_id
+        LIMIT :limit OFFSET :offset
     """)
 
     with get_session(Reader) as session:
-        matched_books = session.execute(query, {"search_value": f"%{search_value}%"}).mappings()
-        matched_books = [Book.from_dict(book) for book in matched_books]
+        books = session.execute(query, {"limit": limit, "offset": offset}).mappings().all()
+        return books
+
+def get_books_count(category_filter: str = None, author_filter: str = None, published_year_filter: int = None) -> int:
+    '''
+        Returns amount of books in database by filter
+    '''
+    query = text("""
+        SELECT COUNT(DISTINCT book_id) AS book_amount
+        FROM books_full_info b
+        WHERE 1=1
+    """)
+    
+    if category_filter:
+        query = text(query.text + " AND b.category_name = :category")
+    if author_filter:
+        query = text(query.text + " AND b.author_name = :author")
+    if published_year_filter:
+        query = text(query.text + " AND b.published_year = :published_year")
+
+    with get_session(Reader) as session:
+        amount = session.execute(query, {"category": category_filter, "author": author_filter, "published_year": published_year_filter}).scalar()
+        return amount
+
+def search_book(search_value: str) -> list:
+    '''
+        Searching for books by given search value 
+        In authors, titles, ISBNs
+        Returns list of matched books
+    '''
+
+    query = text(f"""
+        SELECT                 
+                book_id, 
+                title, 
+                published_year, 
+                isbn, 
+                description,
+                file_path,
+                cover_image_path,
+                array_agg(DISTINCT author_name) AS authors,
+                array_agg(DISTINCT category_name) AS categories
+        FROM books_full_info
+        WHERE title ILIKE :search_value or author_name ILIKE :search_value or isbn ILIKE :search_value
+        GROUP BY book_id, title, published_year, isbn, description, file_path, cover_image_path      
+    """)
+
+    with get_session(Reader) as session:
+        matched_books = session.execute(query, {"search_value": f"%{search_value}%"}).mappings().all()
         return matched_books
 
 
@@ -37,6 +104,32 @@ def search_by_author(author_name: str) -> list:
     '''
     return get_books_from_author(author_name)
 
+
+def get_book_info_by_id(book_id: int) -> dict:
+    '''
+        Returns book info with authors and categories as a list
+        None if unexisted
+    '''
+
+    query = text("""
+    SELECT                 
+            book_id, 
+            title, 
+            published_year, 
+            isbn, 
+            description,
+            file_path,
+            cover_image_path,
+            array_agg(DISTINCT author_name) AS authors,
+            array_agg(DISTINCT category_name) AS categories
+    FROM books_full_info
+    WHERE book_id = :book_id
+    GROUP BY book_id, title, published_year, isbn, description, file_path, cover_image_path
+    """)
+
+    with get_session(Reader) as session:
+        book = session.execute(query, {"book_id": book_id}).mappings().fetchone()
+        return book
 
 def get_book_by_id(book_id: int) -> Book:
     '''
@@ -122,3 +215,36 @@ def find_isbn(isbn: str) -> int:
             return None 
         
         return book_id
+
+
+from sqlalchemy import text
+
+def get_paginated_books(page_number, page_size, author_name_filter=None, 
+                        published_year_filter=None, 
+                        category_name_filter=None) -> list:
+    
+    '''
+        Returns books for pagination by filters
+    '''
+
+    query = text("""
+        SELECT *
+        FROM get_paginated_books(
+            :page_number, 
+            :page_size, 
+            :author_name_filter, 
+            :published_year_filter, 
+            :category_name_filter
+        ) AS result;
+    """)
+
+    with get_session(Reader) as session:
+        books = session.execute(query, {
+            'page_number': page_number,
+            'page_size': page_size,
+            'author_name_filter': author_name_filter,
+            'published_year_filter': published_year_filter,
+            'category_name_filter': category_name_filter
+        }).mappings().fetchall()
+
+        return books

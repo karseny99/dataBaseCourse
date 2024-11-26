@@ -144,8 +144,7 @@ def last_comments(book_id: int) -> None:
                 get_last_comments.clear()
         st.write(f"{comm['comment']}")
         comment_date = comm['commented_at'].strftime('%d.%m.%Y') 
-        username = get_username_by_commentid(comm['user_id'])
-        st.markdown(f"<small>Commented by {username} at {comment_date}</small>", unsafe_allow_html=True)
+        st.markdown(f"<small>Commented by {comm['username']} at {comment_date}</small>", unsafe_allow_html=True)
    
 
   
@@ -155,7 +154,6 @@ def book_page() -> None:
         book's page
     '''
     book_id = st.session_state.get("book_id", None)
-
     if not book_id or not(st.session_state.get("logged_in", None)):
         st.switch_page("main.py")
 

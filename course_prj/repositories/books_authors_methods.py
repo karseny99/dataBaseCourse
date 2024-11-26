@@ -41,16 +41,13 @@ def get_authors_from_book(book_id: int) -> list:
     with get_session(Reader) as session:
 
         query = text("""
-            SELECT a.* 
-            FROM authors a
-            JOIN book_authors ba ON a.author_id = ba.author_id
-            WHERE ba.book_id = :book_id
+            SELECT author_name
+            FROM books_with_authors
+            WHERE book_id = :book_id
         """)
 
-        authors = session.execute(query, {"book_id": book_id}).mappings()
-
-        authors = [Author.from_dict(dict(author)) for author in authors]
-        return authors
+        authors = session.execute(query, {"book_id": book_id}).scalars().all()
+        return [author[0] for author in authors]
 
 
 def insert_authors_by_book(authors: list, book_id: int) -> None:

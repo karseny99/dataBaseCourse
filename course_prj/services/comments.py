@@ -35,19 +35,6 @@ def get_last_comments(book_id: int) -> list:
     if not comments:
         return []
 
-    comments = [comm.__dict__ for comm in comments]
     return comments
 
-@st.cache_data
-def get_username_by_commentid(user_id: int) -> str:
-    '''
-        Calls for a function to get user's name
-        Returns username of user if existed
-        None otherwise
-    '''
-
-    username = repositories.users_methods.get_user_id_info(user_id)
-    if username:
-        username = username.username
-    return username
     

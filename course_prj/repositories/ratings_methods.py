@@ -82,7 +82,7 @@ def get_book_score_from_user(book_id: int, user_id: int) -> dict:
     with get_session(Reader) as session:
         select_query = text("""
             SELECT rating, rated_at 
-            FROM ratings 
+            FROM ratings_view 
             WHERE book_id = :book_id AND user_id = :user_id
         """)
         rating = session.execute(select_query, {'book_id': book_id, 'user_id': user_id}).mappings()
@@ -106,7 +106,7 @@ def get_book_rating_info(book_id: int) -> dict:
             SELECT 
                 COUNT(rating_id) AS ratings_count, 
                 AVG(rating) AS average_rating 
-            FROM ratings 
+            FROM ratings_view 
             WHERE book_id = :book_id
         """)
 

@@ -6,6 +6,8 @@ from datetime import datetime
 
 from services.logger import *
 
+DUMP_RETENTION_DAYS = 1
+DUMP_DIR = os.getenv('SAVE_PATH')
 
 def dump_db(dump_file, db_name, db_user, db_password, db_host, db_port):
 
@@ -45,9 +47,25 @@ def backup_database() -> None:
     dump_db(dump_file, db_name, db_user, db_password, db_host, db_port)
 
 
+def delete_old_dumps():
+    now = time.time()
+    cutoff = now - (DUMP_RETENTION_DAYS * 86400)  # 86400 секунд в дне
+    save_path = DUMP_DIR
+    for filename in os.listdir(save_path):
+        file_path = os.path.join(DUMP_DIR, filename)
+        if os.path.isfile(file_path) and "recover" not in filename :
+            file_creation_time = os.path.getctime(file_path)
+            if file_creation_time < cutoff:
+                os.remove(file_path)
+                logging.info(f"Deleted old dump: {file_path}")
+
+
 schedule.every().minute.do(backup_database)
+schedule.every().minute.do(delete_old_dumps)
+
 
 if __name__ == "__main__":
     while True:
+        print(time.time())
         schedule.run_pending()
         time.sleep(60)

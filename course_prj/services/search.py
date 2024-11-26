@@ -1,33 +1,43 @@
 
 from repositories.books_methods import *
 from repositories.books_authors_methods import get_authors_from_book
+from typing import Any, List
+import streamlit as st
 
-
-def search(searh_request: list) -> list:
+def search(searh_request: str) -> list:
     '''
         Search in fields Title, ISBN, Author, Year
         Calls function for searching in database for books
         Returns a list of matched books
     '''
 
-    searh_value = searh_request[0]
-    search_columns = searh_request[1]
+    return search_book(searh_request)
 
-    matched_books = []
-    for column in search_columns:
-        matched_books += search_in_column(searh_value, column)
-    matched_books = [obj.__dict__ for obj in matched_books]
+
+def update_suggestions(searchterm: str) -> List[tuple[str, Any]]:
+    last = st.session_state.last_query[0]
+    suggestions = st.session_state.last_query[1]
     
-    # Drop duplicates
-    unique_matched_books = []
-    unique_ids = set()
-    for book in matched_books:
-        if book['book_id'] not in unique_ids:
-            unique_ids.add(book['book_id'])
-            unique_matched_books.append(book)
-    matched_books = unique_matched_books
-
-    for i in range(len(matched_books)):
-        matched_books[i]['authors'] = [author.__dict__['name'] for author in get_authors_from_book(matched_books[i]['book_id'])]
+    if abs(len(searchterm) - len(last)) < 2:
+            return [
+                    (
+                    book['title'],
+                    [book['title'], book['book_id']],
+                    )
+                    for book in suggestions
+                ]
+    
+    if last != "" and suggestions and searchterm.startswith(last) :
+        suggestions = [book for book in suggestions if searchterm in book['title']]
+    else:
+        suggestions = search(searchterm)
         
-    return matched_books
+    st.session_state.last_query[0] = searchterm
+    st.session_state.last_query[1] = suggestions
+    return [
+        (
+        book['title'],
+        [str(book['title']), book['book_id']],
+        )
+        for book in suggestions
+    ]

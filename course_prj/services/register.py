@@ -8,17 +8,12 @@ class RegistrationException(Exception):
     '''Base class for registration exception'''
     pass
 
-class UsernameExistsException(RegistrationException):
+class LoginExistsException(RegistrationException):
     '''Exception thrown when username already exists in db'''
-    def __init__(self, message="Username already exists"):
+    def __init__(self, message="Login already exists"):
         self.message = message
         super().__init__(self.message)
 
-class EmailExistsException(RegistrationException):
-    '''Exception thrown when email already exists in db'''
-    def __init__(self, message="Email already exists"):
-        self.message = message
-        super().__init__(self.message)
 
 
 class Validation:
@@ -62,13 +57,9 @@ class Registration:
             Returns a user_id in db
         '''
         
-        registered_usernames = get_all_usernames()
+        registered_usernames = get_all_logins()
         if username in registered_usernames:
-            raise UsernameExistsException()
-
-        registered_emails = get_all_emails()
-        if email in registered_emails:
-            raise EmailExistsException()
+            raise LoginExistsException()
 
         # Hashing password
         hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')

@@ -4,8 +4,38 @@ import os
 import psycopg2
 
 from repositories.books_authors_methods import *
-from repositories.book_categories import insert_categories_by_book
+from repositories.book_categories import insert_categories_by_book, get_categories
 import repositories.books_methods
+import repositories.authors_methods
+
+@st.cache_data
+def get_publishing_years():
+    '''
+        Returns all piblishing years
+    '''
+    return repositories.books_methods.get_publishing_years()
+
+
+@st.cache_data
+def get_categories():
+    '''
+        Returns all category names
+    '''
+    return repositories.book_categories.get_categories()
+
+
+def get_books(offset: int, limit: int) -> list:
+    '''
+        Returns by offset limit books 
+    '''
+    return repositories.books_methods.get_books(offset, limit)
+
+
+def get_total_books_count(category_filter: str = None, author_filter: str = None, published_year_filter: int = None) -> int:
+    '''
+        Returns num of books in database
+    '''
+    return repositories.books_methods.get_books_count(category_filter, author_filter, published_year_filter)
 
 
 def get_book_info(book_id: int) -> dict:
@@ -14,27 +44,15 @@ def get_book_info(book_id: int) -> dict:
         None if book_id does not exists
     '''
 
-    book_item = repositories.books_methods.get_book_by_id(book_id)
-    if not book_item:
-        return None
+    return repositories.books_methods.get_book_info_by_id(book_id)   
 
-    book_info = book_item.__dict__
 
-    book_authors = get_authors_from_book(book_id)
-    book_categories = repositories.books_methods.get_book_categories(book_id)
-
-    if book_authors:
-        book_authors = [author.name for author in book_authors]
-        book_info['authors'] = book_authors
-
-    if book_categories:
-        book_categories = [book.category_name for book in book_categories]
-        book_info['categories'] = book_categories
-
-    
-        
-    return book_info
-
+@st.cache_data
+def get_authors():
+    '''
+        Returns all author's names from database
+    '''
+    return repositories.authors_methods.get_all_authors()
 
 def add_book(book_item: dict) -> int:
     '''
@@ -99,3 +117,11 @@ def validate_isbn(isbn: str) -> bool:
         False otherwise
     '''
     return repositories.books_methods.find_isbn(isbn) == None
+
+
+
+def get_paginated_books(page_number, page_size, author_name_filter=None, published_year_filter=None, category_name_filter=None):
+    '''
+        Returns list of books for pagination
+    '''
+    return repositories.books_methods.get_paginated_books(page_number, page_size, author_name_filter, published_year_filter, category_name_filter)

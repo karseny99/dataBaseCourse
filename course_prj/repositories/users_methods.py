@@ -6,6 +6,24 @@ from sqlalchemy.orm.exc import NoResultFound
 
 from services.logger import *
 
+def get_role(user_id: int) -> str:
+    '''
+        Returns role of user_id
+        None if unexisted
+    '''
+
+    with get_session(Reader) as session:
+        query = text("""
+            SELECT role
+            FROM user_roles
+            where user_id = :user_id
+        """)
+
+        user_role = session.execute(query, {'user_id': user_id}).fetchone()
+        if not user_role:
+            return None 
+        return user_role[0]
+
 def add_new_user(username: str, email: str, password_hash: str, role = 'reader') -> int:
     
     '''
@@ -35,22 +53,14 @@ def add_new_user(username: str, email: str, password_hash: str, role = 'reader')
         return new_user_id
 
 
-def get_all_usernames() -> list:
+def get_all_logins() -> list:
     '''
-        Returns all registered usernames
-    '''
-    with get_session(Authenticator) as session:
-        usernames = session.execute(text("SELECT username FROM users")).fetchall()
-        return [username[0] for username in usernames]
-
-
-def get_all_emails() -> list:
-    '''
-        Returns all registered emails
+        Returns all registered logins
     '''
     with get_session(Authenticator) as session:
-        emails = session.execute(text("SELECT email FROM users")).fetchall()
-        return [email[0] for email in emails]
+        logins = session.execute(text("SELECT username, email FROM user_roles")).fetchall()
+        flat_logins = [item for sublist in logins for item in sublist]
+        return flat_logins
     
 
 def get_user_info(login: str) -> User:
@@ -64,27 +74,14 @@ def get_user_info(login: str) -> User:
             query = text("""
                 SELECT * 
                 FROM users 
-                WHERE username = :login
+                WHERE username = :login or email = :login
             """)
 
             user = session.execute(query, {'login': login}).mappings().one()
             return User.from_dict(user)
         except NoResultFound:
             logging.info(f"User with login {login} not found in usernames, will try to find in emails")
-        
-        try:
-            query = text("""
-                SELECT * 
-                FROM users 
-                WHERE email = :login
-            """)
-            user = session.execute(query, {'login': login}).mappings().one()
-            return User.from_dict(dict(zip(user.keys(), user)))
-
-        except NoResultFound:
-            logging.info(f"User with login {login} not found in database")
-            return None
-    
+            return None    
 
 def get_user_id_info(user_id: int) -> User:
     '''
@@ -110,7 +107,7 @@ def get_user_ids() -> list:
         Returns list of existed user_ids
     '''
     with get_session(Reader) as session:
-        query = text("SELECT user_id FROM users")
+        query = text("SELECT user_id FROM user_roles")
 
         user_ids = session.execute(query).fetchall()
         return [user_id[0] for user_id in user_ids]
@@ -125,7 +122,7 @@ def set_user_admin(user_id: int) -> int:
     with get_session(Admin) as session:
         query = text("""
             SELECT user_id 
-            FROM users 
+            FROM user_roles 
             WHERE user_id = :user_id
         """)
 

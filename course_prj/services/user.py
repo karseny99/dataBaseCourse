@@ -1,5 +1,5 @@
 
-from repositories.users_methods import get_user_id_info, set_user_admin
+from repositories.users_methods import get_user_id_info, set_user_admin, get_role
 from repositories.comments_methods import get_user_actions
 from repositories.requests_methods import get_admin_requested_users, remove_from_requests
 from psycopg2 import OperationalError, connect
@@ -19,9 +19,9 @@ def is_admin() -> bool:
         return False
 
     user_id = st.session_state.user_id
-    user = get_user_info(user_id)
+    user_role = get_role(user_id)
 
-    if not user or user['role'] != 'admin':
+    if not user_role or user_role != 'admin':
         return False
     
     return True

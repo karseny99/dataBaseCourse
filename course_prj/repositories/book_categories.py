@@ -5,6 +5,22 @@ from models.category_model import Category
 from models.book_categories_model import BookCategories
 from services.logger import *
 
+
+def get_categories() -> list:
+    '''
+        Returns list of all categories
+    '''
+
+    with get_session(Reader) as session:
+        query = text("""
+            SELECT category_name
+            FROM categories
+        """)
+
+        categories = session.execute(query).scalars().all()
+        return categories
+
+
 def get_book_categories(book_id: str) -> list:
     '''
         Returns all book's categories
@@ -13,16 +29,13 @@ def get_book_categories(book_id: str) -> list:
     with get_session(Reader) as session:
 
         query = text("""
-            SELECT c.* 
-            FROM categories c
-            JOIN book_categories bc ON c.category_id = bc.category_id
-            WHERE bc.book_id = :book_id
+            SELECT category_name
+            FROM books_with_categories
+            WHERE book_id = :book_id
         """)
 
-
-        categories = session.execute(query, {"book_id": book_id}).mappings()
-        categories = [Category.from_dict(dict(category)) for category in categories]
-        return categories
+        categories = session.execute(query, {"book_id": book_id}).scalars().all()
+        return [category[0] for category in categories]
 
 def insert_categories_by_book(categories: list, book_id: int) -> None:
     '''

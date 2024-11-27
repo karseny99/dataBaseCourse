@@ -17,6 +17,7 @@ DB_CONFIG = {
     "reader_password": os.getenv("READER_PASSWORD"),
     "admin": os.getenv("ADMIN_USER"),
     "admin_password": os.getenv("ADMIN_PASSWORD"),
+    "save_path": os.getenv("SAVE_PATH"),
 }
 
 POOL_SIZE = int(os.getenv("POOL_SIZE", 10))

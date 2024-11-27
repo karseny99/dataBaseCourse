@@ -25,7 +25,6 @@ def role_request(user_info: dict) -> None:
 
 def book_uploading() -> None:
     upload_book = st.file_uploader("Choose book's file", type=["fb2"], accept_multiple_files=False)
-    upload_cover = st.file_uploader("Choose cover's file (jpg)", type=["jpg"], accept_multiple_files=False)
     
     if upload_book is not None:
         if upload_book.type != 'application/octet-stream':
@@ -33,51 +32,19 @@ def book_uploading() -> None:
             return
         
         st.success(f"File {upload_book.name} uploaded")
+        categories = st.text_input("Enter category(s) - split by , if more then one")
 
-        if upload_cover is not None:
-            st.success(f"File {upload_cover.name} uploaded")
-        else:
-            st.info("Cover wasn't uploaded")
 
-        book_item = {
-            "title": st.text_input("Enter book's name").strip(),
-            "published_year": st.number_input("Enter publishing year", step=1, max_value=datetime.now().year),
-            "isbn": st.text_input("Enter ISBN").strip(),
-            "description": st.text_input("Enter book's description").strip(),
-            "file_path": None,
-            "cover_image_path": None,
-            "authors": st.text_input("Enter author(s) - split by , if more then one").strip().split(','),
-            "categories": st.text_input("Enter category(s) - split by , if more then one").strip().split(',')
-        }
+        submit_button = st.button("Submit")
 
-        submit_button = st.button("Submit book's data")
-
-        if submit_button \
-            and len(book_item['title']) \
-            and book_item['published_year'] is not None \
-            and len(book_item['isbn']) \
-            and len(book_item['authors']) \
-            :
-            is_unique = services.book.validate_isbn(book_item['isbn'])
-            if not is_unique:
-                st.error("ISBN is not correct")
+        if submit_button and len(categories):
+            book_id = services.book.add_book(upload_book, categories)
+            if not book_id:
+                st.error("Can't upload book")
             else:
-                path_list = services.book.load_to_storage(upload_book, upload_cover)
-                book_item['file_path'] = path_list[0]
-                if len(path_list) > 1: book_item['cover_image_path'] = path_list[1]
-
-                book_id = services.book.add_book(book_item)
-                if not book_id:
-                    st.error("ISBN is not unique")
-                else:
-                    st.success(f"Book added to database with id {book_id}")
-
-                if st.button("Upload more"):
-                    st.rerun() 
+                st.success(f"Book added to database with id {book_id}")
         else:
-            if submit_button:
-                st.error("You didn't fill important fields")
-
+            st.info("Add some categories")
 
 def admin_requests() -> None:
 

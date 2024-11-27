@@ -23,7 +23,7 @@ def redirect_to_book_page(submit_value: list):
     st.session_state.book_id = submit_value[1]
     st.switch_page("pages/book.py")
 
-# @error_handler
+@error_handler
 def main() -> None:
 
     if not(st.session_state.logged_in):

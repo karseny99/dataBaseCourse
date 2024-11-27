@@ -40,8 +40,10 @@ def pagination_panel() -> None:
 
 
 def books_page() -> None:
-
     back_button = st.button("Back")
+
+    st.title("Book's views")
+
     if not(st.session_state.get("logged_in", None)) or back_button:
         st.switch_page("main.py")
 

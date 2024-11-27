@@ -131,6 +131,14 @@ def get_latest_dump():
     return latest_file
 
 
+def get_last_dump_file_date() -> str:
+    '''
+        Returns date of last dump file
+    '''
+    last_file = get_latest_dump()
+    last_modified_time = os.path.getmtime(last_file)
+    readable_time = time.ctime(last_modified_time)
+    return readable_time
 
         
 def restore_database_dump() -> str:

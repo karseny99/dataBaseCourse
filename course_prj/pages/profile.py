@@ -7,6 +7,7 @@ import os
 from services.user import *
 from services.error_handler import error_handler
 from services.request import add_request
+from services.book import get_categories
 
 import services.book
 
@@ -25,26 +26,43 @@ def role_request(user_info: dict) -> None:
 
 def book_uploading() -> None:
     upload_book = st.file_uploader("Choose book's file", type=["fb2"], accept_multiple_files=False)
-    
+
+    if 'categories' not in st.session_state:
+        st.session_state.categories = get_categories() + ['Unexisted category']
+
     if upload_book is not None:
         if upload_book.type != 'application/octet-stream':
             st.error("Wrong file format")
             return
         
         st.success(f"File {upload_book.name} uploaded")
-        categories = st.text_input("Enter category(s) - split by , if more then one")
-
+        categories = st.multiselect("Select category(s)", st.session_state.categories)
 
         submit_button = st.button("Submit")
 
-        if submit_button and len(categories):
+        if 'Unexisted category' in categories:
+            new_category = st.text_input("Enter new category's name").strip()
+            if st.button("Add new category") and len(new_category):
+                category_id = services.book.add_category(new_category)
+                if category_id is not None:
+                    st.session_state.categories = st.session_state.categories[:-1] + [new_category] + [st.session_state.categories[-1]]
+                    st.success(f"New category added: {new_category}")
+                else:
+                    st.error(f"Category {new_category} exists")
+
+                new_category = ""
+
+        if submit_button and len(categories) and 'Unexisted category' not in categories:
             book_id = services.book.add_book(upload_book, categories)
             if not book_id:
                 st.error("Can't upload book")
             else:
                 st.success(f"Book added to database with id {book_id}")
         else:
-            st.info("Add some categories")
+            if 'Unexisted category' in categories:
+                st.info("Remove unexisted category from selected categories")
+            else:
+                st.info("Add some categories")
 
 def admin_requests() -> None:
 

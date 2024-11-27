@@ -7,9 +7,19 @@ from PIL import Image
 import io
 
 from repositories.books_authors_methods import *
-from repositories.book_categories import insert_categories_by_book, get_categories
+from repositories.book_categories import insert_categories_by_book, get_categories, add_category
 import repositories.books_methods
 import repositories.authors_methods
+
+def add_category(new_category: str) -> int:
+    '''
+        Inserts new category
+        Returns category_id if successfully
+        None otherwise
+    '''
+
+    return repositories.book_categories.add_category(new_category)
+
 
 @st.cache_data
 def get_publishing_years():
@@ -109,7 +119,7 @@ def load_to_storage(upload_book, categories) -> list:
         "file_path": save_path,
         "cover_image_path": cover_path,
         "authors": meta.author_list if meta.author_list is not None else None,
-        "categories": categories.strip().split(',') if categories is not None else None
+        "categories": categories if categories is not None else None
     }
 
     return book_item

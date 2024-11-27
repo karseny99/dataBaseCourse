@@ -5,6 +5,36 @@ from models.category_model import Category
 from models.book_categories_model import BookCategories
 from services.logger import *
 
+def add_category(new_category: str) -> int:
+    '''
+        Returns category_id if success
+        None otherwise
+    '''
+
+    query_validate = text("""
+        SELECT category_id
+        FROM categories
+        WHERE category_name = :category_name
+    """)
+
+    insert_query = text("""
+        INSERT INTO categories (category_name) 
+        VALUES (:category_name) 
+        RETURNING category_id
+    """)
+
+    with get_session(Admin) as session:
+        category_id = session.execute(query_validate, {"category_name": new_category}).fetchone()
+
+        if category_id:
+            return None
+        
+        new_category_id = session.execute(insert_query, {"category_name": new_category}).fetchone() 
+        new_category_id = new_category_id[0]
+
+        logging.info(f"New category inserted: {new_category}")
+        return new_category_id
+
 
 def get_categories() -> list:
     '''

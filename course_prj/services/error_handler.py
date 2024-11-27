@@ -6,7 +6,6 @@ from services.logger import *
 
 def handle_error(e):
     logging.error(e)
-    # print(f"\n\n {e} \n\n{type(e)} \n\n")
     if isinstance(e, OperationalError) or isinstance(e, psycopg2.OperationalError):
         call_display_page("Cannot load from database ...")
     else:

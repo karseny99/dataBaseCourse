@@ -19,6 +19,10 @@ services:
       READER_PASSWORD: 1
       ADMIN_USER: admin
       ADMIN_PASSWORD: 1
+      SAVE_PATH: ./dumps/
+    volumes:
+      - ./dumps:/app/dumps 
+
 
   db:
     image: postgres:13

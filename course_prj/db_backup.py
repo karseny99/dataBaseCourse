@@ -49,7 +49,7 @@ def backup_database() -> None:
 
 def delete_old_dumps():
     now = time.time()
-    cutoff = now - (DUMP_RETENTION_DAYS * 86400)  # 86400 секунд в дне
+    cutoff = now - (DUMP_RETENTION_DAYS * 86400) 
     save_path = DUMP_DIR
     for filename in os.listdir(save_path):
         file_path = os.path.join(DUMP_DIR, filename)

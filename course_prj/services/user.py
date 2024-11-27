@@ -11,7 +11,8 @@ import streamlit as st
 import os
 import json
 from datetime import datetime
-
+import time
+import glob
 from settings import DB_CONFIG
 
 def is_admin() -> bool:
@@ -116,14 +117,31 @@ def set_admin_role(user_id: int) -> int:
 
     return set_user_admin(user_id)
 
+def get_latest_dump():
+    '''
+        Returns last dump file's name from folder
+    '''
+
+    directory = DB_CONFIG['save_path']
+    files = glob.glob(os.path.join(directory, '*.dump')) 
+    if not files:
+        return None  
+
+    latest_file = max(files, key=os.path.getmtime)
+    return latest_file
+
+
 
         
-def restore_database_dump(input_file) -> None:
+def restore_database_dump() -> str:
     '''
         Restore of database by given dump file
+        Returns file's name that was choosen
     '''
 
-    save_path = "dumps/"
+    input_file = get_latest_dump()
+
+    save_path = DB_CONFIG['save_path']
     db_name = DB_CONFIG['dbname']
     db_user = DB_CONFIG['user']
     db_password = DB_CONFIG['password']
@@ -133,12 +151,8 @@ def restore_database_dump(input_file) -> None:
     dump_file_name = save_path + f"before_recover_backup_{db_name}_{datetime.now().strftime('%d.%m.%Y_%H.%M.%S')}.dump"
     dump_db(dump_file_name, db_name, db_user, db_password, db_host, db_port)
 
-    input_file_save_path = os.path.join(save_path, input_file.name)
-
-    with open(input_file_save_path, "wb") as uploaded_dump_file:
-        uploaded_dump_file.write(input_file.getbuffer())
-
-    restore_database_from_file(input_file_save_path)
+    restore_database_from_file(input_file)
+    return input_file
 
 # restore_database_dump('postgres', 'postgres', 'localhost', 5432, 'file', '1')
 

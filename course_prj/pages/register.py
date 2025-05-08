@@ -46,7 +46,7 @@ def regsiter_user() -> None:
                     go_searching = st.button("Go to searching page")
                     if go_searching:
                         st.switch_page("main.py")
-                except (UsernameExistsException, EmailExistsException) as e:
+                except LoginExistsException as e:
                     st.error(e.message)
                 except Exception as e:
                     print(f"Cannot register user because of {e}")

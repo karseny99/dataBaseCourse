@@ -7,6 +7,7 @@ import os
 from services.user import *
 from services.error_handler import error_handler
 from services.request import add_request
+from services.book import get_categories
 
 import services.book
 
@@ -25,51 +26,43 @@ def role_request(user_info: dict) -> None:
 
 def book_uploading() -> None:
     upload_book = st.file_uploader("Choose book's file", type=["fb2"], accept_multiple_files=False)
-    upload_cover = st.file_uploader("Choose cover's file (jpg)", type=["jpg"], accept_multiple_files=False)
-    
+
+    if 'categories' not in st.session_state:
+        st.session_state.categories = get_categories() + ['Unexisted category']
+
     if upload_book is not None:
         if upload_book.type != 'application/octet-stream':
             st.error("Wrong file format")
             return
         
         st.success(f"File {upload_book.name} uploaded")
+        categories = st.multiselect("Select category(s)", st.session_state.categories)
 
-        if upload_cover is not None:
-            st.success(f"File {upload_cover.name} uploaded")
+        submit_button = st.button("Submit")
+
+        if 'Unexisted category' in categories:
+            new_category = st.text_input("Enter new category's name").strip()
+            if st.button("Add new category") and len(new_category):
+                category_id = services.book.add_category(new_category)
+                if category_id is not None:
+                    st.session_state.categories = st.session_state.categories[:-1] + [new_category] + [st.session_state.categories[-1]]
+                    st.success(f"New category added: {new_category}")
+                else:
+                    st.error(f"Category {new_category} exists")
+
+                new_category = ""
+
+        if submit_button and len(categories) and 'Unexisted category' not in categories:
+            book_id = services.book.add_book(upload_book, categories)
+            if not book_id:
+                st.error("Can't upload book")
+            else:
+                st.success(f"Book added to database with id {book_id}")
         else:
-            st.info("Cover wasn't uploaded")
-
-        book_item = {
-            "title": st.text_input("Enter book's name").strip(),
-            "published_year": st.number_input("Enter publishing year", step=1, max_value=datetime.now().year),
-            "isbn": st.text_input("Enter ISBN").strip(),
-            "description": st.text_input("Enter book's description").strip(),
-            "file_path": None,
-            "cover_image_path": None,
-            "authors": st.text_input("Enter author(s) - split by , if more then one").strip().split(','),
-            "categories": st.text_input("Enter category(s) - split by , if more then one").strip().split(',')
-        }
-
-        submit_button = st.button("Submit book's data")
-
-        if submit_button \
-            and len(book_item['title']) \
-            and book_item['published_year'] is not None \
-            and len(book_item['isbn']) \
-            and len(book_item['authors']) \
-            :
-            path_list = services.book.load_to_storage(upload_book, upload_cover)
-            book_item['file_path'] = path_list[0]
-            if len(path_list) > 1: book_item['cover_image_path'] = path_list[1]
-
-            st.success(f"Book added to database with id {services.book.add_book(book_item)}")
-
-            if st.button("Upload more"):
-                st.rerun() 
-        else:
-            if submit_button:
-                st.error("You didn't fill important fields")
-
+            if 'Unexisted category' in categories:
+                st.info("Remove unexisted category from selected categories")
+            else:
+                st.info("Add some categories")
 
 def admin_requests() -> None:
 

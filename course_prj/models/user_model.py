@@ -5,23 +5,22 @@ from dataclasses import dataclass
 
 Base = declarative_base()
 
-class User(Base):
-    __tablename__ = 'users'
+class User:
+    def __init__(self, user_id: int, username: str, email: str, password_hash: str, role: str, register_date: str):
+        self.user_id = user_id
+        self.username = username
+        self.email = email
+        self.password_hash = password_hash
+        self.role = role
+        self.register_date = register_date
 
-    user_id = Column(Integer, primary_key=True, autoincrement=True)
-    username = Column(String(50), unique=True, nullable=False)
-    email = Column(String(100), unique=True, nullable=False)
-    password_hash = Column(String(256), nullable=False)
-    role = Column(String(10), default='reader', nullable=False)
-    register_date = Column(DateTime, default=datetime.now())
-
-    @classmethod 
-    def from_orm(cls, user_orm):
+    @classmethod
+    def from_dict(cls, user_dict):
         return cls(
-            user_id = user_orm.user_id,
-            username = user_orm.username,
-            email = user_orm.email,
-            password_hash = user_orm.password_hash,
-            role = user_orm.role,
-            register_date = user_orm.register_date
+            user_id=int(user_dict['user_id']),
+            username=user_dict['username'],
+            email=user_dict['email'],
+            password_hash=user_dict['password_hash'],
+            role=user_dict['role'],
+            register_date=user_dict['register_date']
         )

@@ -1,10 +1,54 @@
 import streamlit as st
 import uuid
 import os
+import psycopg2
+import ebookmeta
+from PIL import Image
+import io
 
 from repositories.books_authors_methods import *
-from repositories.book_categories import insert_categories_by_book
+from repositories.book_categories import insert_categories_by_book, get_categories, add_category
 import repositories.books_methods
+import repositories.authors_methods
+
+def add_category(new_category: str) -> int:
+    '''
+        Inserts new category
+        Returns category_id if successfully
+        None otherwise
+    '''
+
+    return repositories.book_categories.add_category(new_category)
+
+
+@st.cache_data
+def get_publishing_years():
+    '''
+        Returns all piblishing years
+    '''
+    return repositories.books_methods.get_publishing_years()
+
+
+@st.cache_data
+def get_categories():
+    '''
+        Returns all category names
+    '''
+    return repositories.book_categories.get_categories()
+
+
+def get_books(offset: int, limit: int) -> list:
+    '''
+        Returns by offset limit books 
+    '''
+    return repositories.books_methods.get_books(offset, limit)
+
+
+def get_total_books_count(category_filter: str = None, author_filter: str = None, published_year_filter: int = None) -> int:
+    '''
+        Returns num of books in database
+    '''
+    return repositories.books_methods.get_books_count(category_filter, author_filter, published_year_filter)
 
 
 def get_book_info(book_id: int) -> dict:
@@ -13,36 +57,29 @@ def get_book_info(book_id: int) -> dict:
         None if book_id does not exists
     '''
 
-    book_item = repositories.books_methods.get_book_by_id(book_id)
-    if not book_item:
-        return None
-
-    book_info = book_item.__dict__
-
-    book_authors = get_authors_from_book(book_id)
-    book_categories = repositories.books_methods.get_book_categories(book_id)
-
-    if book_authors:
-        book_authors = [author.name for author in book_authors]
-        book_info['authors'] = book_authors
-
-    if book_categories:
-        book_categories = [book.category_name for book in book_categories]
-        book_info['categories'] = book_categories
-
-    
-        
-    return book_info
+    return repositories.books_methods.get_book_info_by_id(book_id)   
 
 
-def add_book(book_item: dict) -> int:
+@st.cache_data
+def get_authors():
+    '''
+        Returns all author's names from database
+    '''
+    return repositories.authors_methods.get_all_authors()
+
+def add_book(upload_book, categories) -> int:
     '''
         Calls for book addition to database
         Also calls for authors and category insertion
         Returns book_id
+        None if unsuccessfully
     '''
 
+    book_item = load_to_storage(upload_book, categories)
+
+
     book_id = repositories.books_methods.add_book(book_item)
+
 
     insert_authors_by_book(book_item['authors'], book_id)
 
@@ -51,13 +88,11 @@ def add_book(book_item: dict) -> int:
     return book_id
 
 
-def load_to_storage(upload_book, upload_cover) -> list:
+def load_to_storage(upload_book, categories) -> list:
     '''
-        Loads .fb2 and .jpg to database, or only .fb2 if .jpg wasn't given
-        Returns path list
+        Loads .fb2 database
+        Returns book's info dict
     '''
-
-    uploaded_pair = []
 
     unique_book_file_name = generate_unique_filename(upload_book.name)
 
@@ -66,20 +101,28 @@ def load_to_storage(upload_book, upload_cover) -> list:
     with open(save_path, "wb") as book_file:
         book_file.write(upload_book.getbuffer())
 
-    uploaded_pair.append(save_path)
+    meta = ebookmeta.get_metadata(save_path)
 
-    if upload_cover is not None:
+    byte_array_cover = meta.cover_image_data
+    cover_path = None
+    if byte_array_cover is not None:
+        cover_image = Image.open(io.BytesIO(byte_array_cover))
         unique_cover_file_name = f"{os.path.splitext(unique_book_file_name)[0]}.jpg"
-        cover_save_path = os.path.join("storage", "covers", unique_cover_file_name)
+        cover_path = os.path.join("storage", "covers", unique_cover_file_name)
+        cover_image.save(cover_path, "JPEG")
+        
+    book_item = {
+        "title": meta.title,
+        "published_year": meta.publish_info.year if meta.publish_info.year else None,
+        "isbn": meta.publish_info.isbn if meta.publish_info.isbn else None,
+        "description": meta.description[:50] + "..." if meta.description is not None else None,
+        "file_path": save_path,
+        "cover_image_path": cover_path,
+        "authors": meta.author_list if meta.author_list is not None else None,
+        "categories": categories if categories is not None else None
+    }
 
-        os.makedirs(os.path.dirname(cover_save_path), exist_ok=True)
-
-        with open(cover_save_path, "wb") as cover_file:
-            cover_file.write(upload_cover.getbuffer())
-
-        uploaded_pair.append(cover_save_path)
-
-    return uploaded_pair
+    return book_item
   
 
 
@@ -88,3 +131,19 @@ def generate_unique_filename(filename: str) -> str:
         Generates unique file name
     '''
     return f"{str(uuid.uuid4())}{os.path.splitext(filename)[1]}"
+
+
+def validate_isbn(isbn: str) -> bool:
+    '''
+        True if isbn valid
+        False otherwise
+    '''
+    return repositories.books_methods.find_isbn(isbn) == None
+
+
+
+def get_paginated_books(page_number, page_size, author_name_filter=None, published_year_filter=None, category_name_filter=None):
+    '''
+        Returns list of books for pagination
+    '''
+    return repositories.books_methods.get_paginated_books(page_number, page_size, author_name_filter, published_year_filter, category_name_filter)

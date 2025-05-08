@@ -1,5 +1,5 @@
 
-from repositories.users_methods import get_user_id_info, set_user_admin
+from repositories.users_methods import get_user_id_info, set_user_admin, get_role
 from repositories.comments_methods import get_user_actions
 from repositories.requests_methods import get_admin_requested_users, remove_from_requests
 from psycopg2 import OperationalError, connect
@@ -11,7 +11,8 @@ import streamlit as st
 import os
 import json
 from datetime import datetime
-
+import time
+import glob
 from settings import DB_CONFIG
 
 def is_admin() -> bool:
@@ -19,9 +20,9 @@ def is_admin() -> bool:
         return False
 
     user_id = st.session_state.user_id
-    user = get_user_info(user_id)
+    user_role = get_role(user_id)
 
-    if not user or user['role'] != 'admin':
+    if not user_role or user_role != 'admin':
         return False
     
     return True
@@ -78,7 +79,7 @@ def get_info_data_file() -> str:
     with open(save_path, "a") as data_file:
 
         for user_id in users_requested:
-            info_data = get_info_actions_user(user_id[0])
+            info_data = get_info_actions_user(user_id)
 
             # Cleaning given dict for json dump
             info_data.pop('_sa_instance_state', None)
@@ -116,52 +117,39 @@ def set_admin_role(user_id: int) -> int:
 
     return set_user_admin(user_id)
 
+def get_latest_dump():
+    '''
+        Returns last dump file's name from folder
+    '''
 
-import subprocess
+    directory = DB_CONFIG['save_path']
+    files = glob.glob(os.path.join(directory, '*.dump')) 
+    if not files:
+        return None  
 
-# def create_database_dump(db_name, user, password):
-#     '''
-#         Creates dump of database,
-#         Returns created dump file
-#         None if auth data is wrong
-#     '''
+    latest_file = max(files, key=os.path.getmtime)
+    return latest_file
 
-#     filename = 'storage/db.dump'
 
-#     try:
-#         os.environ['PGPASSWORD'] = password
+def get_last_dump_file_date() -> str:
+    '''
+        Returns date of last dump file
+    '''
+    last_file = get_latest_dump()
+    last_modified_time = os.path.getmtime(last_file)
+    readable_time = time.ctime(last_modified_time)
+    return readable_time
 
-#         command = [
-#             'pg_dump',
-#             '-d', db_name,
-#             '-U', user,
-#             '-h', 'localhost',
-#             '-p', '5432',
-#             '-F', 'c', 
-#             '-f', filename
-#         ]
-
-#         subprocess.run(command, capture_output=True, check=True, text=True)
-#     except subprocess.CalledProcessError as e:
-#         # print(f"Cannot create dump of database, because of {e}")
-
-#         if "authentication failed" in e.stderr.lower():
-#             return None
-#         elif "connection" in e.stderr.lower():
-#             print(f"Cannot create dump of database, because of {e}")
-#             raise OperationalError("Database connection error")
-#     finally:
-#         del os.environ['PGPASSWORD']
-
-#     return filename
-# create_database_dump('postgres', 'postgres', 'localhost', '5432', 'file', '1')
         
-def restore_database_dump(input_file) -> None:
+def restore_database_dump() -> str:
     '''
         Restore of database by given dump file
+        Returns file's name that was choosen
     '''
 
-    save_path = "dumps/"
+    input_file = get_latest_dump()
+
+    save_path = DB_CONFIG['save_path']
     db_name = DB_CONFIG['dbname']
     db_user = DB_CONFIG['user']
     db_password = DB_CONFIG['password']
@@ -171,12 +159,8 @@ def restore_database_dump(input_file) -> None:
     dump_file_name = save_path + f"before_recover_backup_{db_name}_{datetime.now().strftime('%d.%m.%Y_%H.%M.%S')}.dump"
     dump_db(dump_file_name, db_name, db_user, db_password, db_host, db_port)
 
-    input_file_save_path = os.path.join(save_path, input_file.name)
-
-    with open(input_file_save_path, "wb") as uploaded_dump_file:
-        uploaded_dump_file.write(input_file.getbuffer())
-
-    restore_database_from_file(input_file_save_path)
+    restore_database_from_file(input_file)
+    return input_file
 
 # restore_database_dump('postgres', 'postgres', 'localhost', 5432, 'file', '1')
 

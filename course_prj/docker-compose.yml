@@ -13,6 +13,16 @@ services:
       DB_PORT: 5432
       POOL_SIZE: 10
       POOL_MAX_SIZE: 20
+      AUTHENTICATOR_USER: authenticator
+      AUTHENTICATOR_PASSWORD: 1
+      READER_USER: reader
+      READER_PASSWORD: 1
+      ADMIN_USER: admin
+      ADMIN_PASSWORD: 1
+      SAVE_PATH: ./dumps/
+    volumes:
+      - ./dumps:/app/dumps 
+
 
   db:
     image: postgres:13

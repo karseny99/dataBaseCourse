@@ -9,7 +9,7 @@ def restore_database_from_file(filename: str) -> None:
         Deletes all tables & triggers, then calls for recovery
         If unsuccessfully then rollbacks db
     '''
-    with get_session() as session:
+    with get_session(Admin) as session:
         db_recovery(filename)
 
 def db_recovery(filename: str) -> None:
@@ -38,6 +38,8 @@ def db_recovery(filename: str) -> None:
 
     try:
         subprocess.run(command, capture_output=True, check=True, text=True)
+    except subprocess.CalledProcessError as e:
+        raise OperationalError("Error output:" + e.stderr)  # Выводим текст ошибки
     except Exception as e:
         raise OperationalError(f"Database connection error: {str(e)}")
     finally:

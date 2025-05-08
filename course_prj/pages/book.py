@@ -39,17 +39,17 @@ def show_main_info(book: dict) -> None:
 
     st.write(f"ISBN {book['isbn']}")
 
-    st.write(f"Published in {book['published_year']}")
+    st.write(f"Published in {book.get('published_year', 'Unknown')}")
 
-    authors = "".join(f"{author}," for author in book['authors'])[:-1]
+    authors = "".join(f"{author}," for author in book.get('authors', ''))[:-1]
 
     st.markdown(f"Author(s) - {authors}")
 
-    categories = "".join(f" {category}," for category in book['categories'])[:-1]
+    categories = "".join(f" {category}," for category in book.get('categories', ''))[:-1]
 
     st.markdown(f"Categories - {categories}")
 
-    st.write(f"description - {book['description']}")
+    st.write(f"description - {book.get('description', '')}")
 
     st.markdown("---")
 
@@ -144,18 +144,16 @@ def last_comments(book_id: int) -> None:
                 get_last_comments.clear()
         st.write(f"{comm['comment']}")
         comment_date = comm['commented_at'].strftime('%d.%m.%Y') 
-        username = get_username_by_commentid(comm['user_id'])
-        st.markdown(f"<small>Commented by {username} at {comment_date}</small>", unsafe_allow_html=True)
+        st.markdown(f"<small>Commented by {comm['username']} at {comment_date}</small>", unsafe_allow_html=True)
    
 
   
-
+@error_handler
 def book_page() -> None:
     '''
         book's page
     '''
     book_id = st.session_state.get("book_id", None)
-
     if not book_id or not(st.session_state.get("logged_in", None)):
         st.switch_page("main.py")
 

@@ -6,8 +6,14 @@ from models.category_model import Category
 
 Base = declarative_base()
 
-class BookCategories(Base):
-    __tablename__ = 'book_categories'
-    
-    book_id = Column(Integer, ForeignKey(Book.book_id), primary_key=True)
-    category_id = Column(Integer, ForeignKey(Category.category_id), primary_key=True)
+class BookCategories:
+    def __init__(self, book_id: int, category_id: int):
+        self.book_id = book_id
+        self.category_id = category_id
+
+    @classmethod
+    def from_dict(cls, category_dict):
+        return cls(
+            book_id=int(category_dict['book_id']),
+            category_id=int(category_dict['category_id'])
+        )

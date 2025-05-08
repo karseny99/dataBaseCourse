@@ -3,29 +3,30 @@ from sqlalchemy.ext.declarative import declarative_base
 from datetime import datetime
 from dataclasses import dataclass
 
-Base = declarative_base()
 
-class Book(Base):
+class Book():
     __tablename__ = 'books'
-    
-    book_id = Column(Integer, primary_key=True, autoincrement=True)
-    title = Column(String(256), nullable=False)
-    published_year = Column(Integer, nullable=True)
-    isbn = Column(String(256), unique=True, nullable=True)
-    description = Column(Text, nullable=True)
-    added_at = Column(DateTime, nullable=False)
-    file_path = Column(String(512), nullable=False)  
-    cover_image_path = Column(String(512), nullable=True) 
 
-    @classmethod 
-    def from_orm(cls, book_orm):
+    def __init__(self, book_id: int, title: str, published_year: int, isbn: str, 
+                 description: str, added_at: str, file_path: str, cover_image_path: str):
+        self.book_id = book_id
+        self.title = title
+        self.published_year = published_year
+        self.isbn = isbn
+        self.description = description
+        self.added_at = added_at
+        self.file_path = file_path
+        self.cover_image_path = cover_image_path
+
+    @classmethod
+    def from_dict(cls, book_dict):
         return cls(
-            book_id = book_orm.book_id,
-            title = book_orm.title,
-            published_year = book_orm.published_year,
-            isbn = book_orm.isbn,
-            description = book_orm.description,
-            added_at = book_orm.added_at,
-            file_path = book_orm.file_path,
-            cover_image_path = book_orm.cover_image_path
+            book_id=int(book_dict['book_id']),
+            title=book_dict['title'],
+            published_year=book_dict['published_year'],
+            isbn=book_dict['isbn'],
+            description=book_dict['description'],
+            added_at=book_dict['added_at'],
+            file_path=book_dict['file_path'],
+            cover_image_path=book_dict.get('cover_image_path')  # Используем get для обработки возможного отсутствия
         )

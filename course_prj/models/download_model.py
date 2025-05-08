@@ -7,19 +7,19 @@ from sqlalchemy.ext.declarative import declarative_base
 
 Base = declarative_base()
 
-class Download(Base):
-    __tablename__ = 'downloads'
-    
-    download_id = Column(Integer, primary_key=True, autoincrement=True)
-    user_id = Column(Integer, ForeignKey(User.user_id), primary_key=True)
-    book_id = Column(Integer, ForeignKey(Book.book_id), primary_key=True)
-    download_date = Column(DateTime, default=datetime.now())
+class Download:
+    def __init__(self, download_id: int, user_id: int, book_id: int, download_date: str):
+        self.download_id = download_id
+        self.user_id = user_id
+        self.book_id = book_id
+        self.download_date = download_date
 
-    @classmethod 
-    def from_orm(cls, download_orm):
+    @classmethod
+    def from_dict(cls, download_dict):
         return cls(
-            download_id=download_orm.download_id,
-            book_id=download_orm.book_id,
-            user_id=download_orm.user_id,
-            download_date=download_orm.download_date
+            download_id=int(download_dict['download_id']),
+            user_id=int(download_dict['user_id']),
+            book_id=int(download_dict['book_id']),
+            download_date=download_dict['download_date']
         )
+

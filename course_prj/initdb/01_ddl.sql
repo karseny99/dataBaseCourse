@@ -214,3 +214,54 @@ COMMENT ON COLUMN admin_requests.request_id IS 'Уникальный идент�
 COMMENT ON COLUMN admin_requests.user_id IS 'Уникальный идентификатор пользователя';
 
 COMMENT ON COLUMN admin_requests.request_date IS 'Дата запроса';
+
+CREATE VIEW user_roles AS
+SELECT user_id, username, email, role
+FROM users;
+
+CREATE VIEW books_with_authors AS
+SELECT b.book_id, b.title, b.published_year, b.isbn, b.description, a.name AS author_name
+FROM books b
+JOIN book_authors ba ON b.book_id = ba.book_id
+JOIN authors a ON ba.author_id = a.author_id;
+
+CREATE VIEW books_with_categories AS
+SELECT b.book_id, b.title, b.published_year, b.isbn, c.category_name
+FROM books b
+JOIN book_categories bc ON b.book_id = bc.book_id
+JOIN categories c ON bc.category_id = c.category_id;
+
+CREATE VIEW books_full_info AS
+SELECT 
+    b.book_id, 
+    b.title, 
+    b.published_year, 
+    b.isbn, 
+    b.description, 
+    a.name AS author_name, 
+    c.category_name,
+    b.file_path,
+    b.cover_image_path
+FROM books b
+LEFT JOIN book_authors ba ON b.book_id = ba.book_id
+LEFT JOIN authors a ON ba.author_id = a.author_id
+LEFT JOIN book_categories bc ON b.book_id = bc.book_id
+LEFT JOIN categories c ON bc.category_id = c.category_id;
+
+
+CREATE VIEW comments_view AS
+SELECT c.comment_id, c.user_id, c.book_id, c.comment, c.commented_at, u.username
+FROM comments c
+JOIN users u ON c.user_id = u.user_id;
+
+
+CREATE VIEW downloads_view AS
+SELECT d.download_id, d.user_id, d.book_id, d.download_date, u.username
+FROM downloads d
+JOIN users u ON d.user_id = u.user_id;
+
+
+CREATE VIEW ratings_view AS
+SELECT r.rating_id, r.user_id, r.book_id, r.rating, r.rated_at, u.username
+FROM ratings r
+JOIN users u ON r.user_id = u.user_id;

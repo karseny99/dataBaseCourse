@@ -1,19 +1,18 @@
 from sqlalchemy import Column, Integer, String, Text
 from sqlalchemy.ext.declarative import declarative_base
 
-Base = declarative_base()
-
-class Author(Base):
+class Author():
     __tablename__ = 'authors'
     
-    author_id = Column(Integer, primary_key=True, autoincrement=True)
-    name = Column(String(100), nullable=False)
-    bio = Column(Text, nullable=True)
+    def __init__(self, author_id: int, name: str, bio: str):
+       self.author_id = author_id
+       self.name = name
+       self.bio = bio
 
     @classmethod 
-    def from_orm(cls, author_orm):
+    def from_dict(cls, author_dict):
         return cls(
-            author_id=author_orm.author_id,
-            name=author_orm.name,
-            bio=author_orm.bio
+            author_id=int(author_dict['author_id']),
+            name=author_dict['name'],
+            bio=author_dict['bio']
         )

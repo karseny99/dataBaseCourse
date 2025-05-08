@@ -86,11 +86,9 @@ create table book_authors (
     author_id serial references authors(author_id) on delete cascade,
     book_id serial references books(book_id) on delete cascade,
     primary key (author_id, book_id)
-  );
-
+);
 
 CREATE INDEX idx_book_authors_author_book ON book_authors(author_id, book_id);
-
 
 COMMENT ON TABLE book_authors IS 'Информация о связи книг и авторов';
 

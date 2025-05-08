@@ -7,9 +7,14 @@ from models.book_model import Book
 
 Base = declarative_base()
 
-class BookAuthor(Base):
-    __tablename__ = 'book_authors'
-    
-    author_id = Column(Integer, ForeignKey(Author.author_id), primary_key=True)
-    book_id = Column(Integer, ForeignKey(Book.book_id), primary_key=True)
+class BookAuthor:
+    def __init__(self, author_id: int, book_id: int):
+        self.author_id = author_id
+        self.book_id = book_id
 
+    @classmethod
+    def from_dict(cls, book_author_dict):
+        return cls(
+            author_id=int(book_author_dict['author_id']),
+            book_id=int(book_author_dict['book_id'])
+        )
